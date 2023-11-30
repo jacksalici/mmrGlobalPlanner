@@ -20,8 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'talker = global_planner.publisher_member_function:main',
-            'listener = global_planner.subscriber_member_function:main',
+            'runner = global_planner.global_planner_node:main',
         ]
 
     },
