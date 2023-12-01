@@ -4,6 +4,7 @@ from rclpy.node import Node
 from visualization_msgs.msg import Marker
 from mmr_base.msg import RaceStatus
 
+import json
 
 
 
@@ -25,7 +26,9 @@ class GlobalPlanner(Node):
             self.slam_cone_sub_callback,
             10)
         
-    
+        self.blue_coord = []
+        self.yellow_coord = []
+
     def slam_cone_sub_callback(self, msg: Marker):
         # after first lap, as soon as first slam cone marker is listened, elaborate cone and destroy subs
         if self.__current_lap == 1:
@@ -41,8 +44,18 @@ class GlobalPlanner(Node):
             self.get_logger().info(f'LAP {self.__current_lap} COMPLETE.')
     
     def elaborateConePosition(self):
-        self.get_logger().info(f'ELABORATED {str(len(self.slam_cone.points))} CONES.')
+        self.get_logger().info(f'ELABORATED {len(str(self.slam_cone.points))}')
 
+        for color, point in zip(self.slam_cone.colors, self.slam_cone.points):
+            # Fill blue cones array
+            if color.r < 0.1 and color.g < 0.1 and color.b > 0.9:
+                self.blue_coord.append([point.x, point.y])
+            # Fill yellow cones array
+            elif color.r > 0.9 and color.g > 0.9 and color.b < 0.1:
+                self.yellow_coord.append([point.x, point.y])
+
+        with open("coords.json", "w") as f:
+            json.dump({"yellow": self.yellow_coord, "blue": self.blue_coord}, f)
         
 def main(args=None):
     rclpy.init(args=args)
