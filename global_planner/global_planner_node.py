@@ -31,7 +31,10 @@ class GlobalPlanner(Node):
 
     def slam_cone_sub_callback(self, msg: Marker):
         # after first lap, as soon as first slam cone marker is listened, elaborate cone and destroy subs
-        if self.__current_lap == 1:
+        #first lap ends when the lap counter turns to 2.
+        self.get_logger().info(f'READ {len(msg.points)}')
+
+        if self.__current_lap == 2:
             self.slam_cone = msg
             self.elaborateConePosition()
             self.destroy_subscription(self.race_status_sub)
