@@ -7,11 +7,17 @@ from mmr_base.msg import RaceStatus
 import json
 
 
+class Cones():
+    b = []
+    y = []
 
+    def dump(self, file = 'coords.json'):
+        with open(file, "w") as f:
+            json.dump({"yellow": self.y, "blue": self.b}, f)
 
 class GlobalPlanner(Node):    
     __current_lap = 0
-
+    
     def __init__(self):
         super().__init__('race_status_sub')
         self.race_status_sub = self.create_subscription(
@@ -26,8 +32,7 @@ class GlobalPlanner(Node):
             self.slam_cone_sub_callback,
             10)
         
-        self.blue_coord = []
-        self.yellow_coord = []
+        self.cones = Cones()
 
     def slam_cone_sub_callback(self, msg: Marker):
         # after first lap, as soon as first slam cone marker is listened, elaborate cone and destroy subs
@@ -54,13 +59,12 @@ class GlobalPlanner(Node):
         for color, point in zip(self.slam_cone.colors, self.slam_cone.points):
             # Fill blue cones array
             if color.r < 0.1 and color.g < 0.1 and color.b > 0.9:
-                self.blue_coord.append([point.x, point.y])
+                self.cones.b.append([point.x, point.y])
             # Fill yellow cones array
             elif color.r > 0.9 and color.g > 0.9 and color.b < 0.1:
-                self.yellow_coord.append([point.x, point.y])
+                self.cones.b.append([point.x, point.y])
 
-        with open("coords.json", "w") as f:
-            json.dump({"yellow": self.yellow_coord, "blue": self.blue_coord}, f)
+        self.cones.dump()
         
 def main(args=None):
     rclpy.init(args=args)
