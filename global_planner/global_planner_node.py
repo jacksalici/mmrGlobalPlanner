@@ -44,7 +44,9 @@ class GlobalPlanner(Node):
             self.get_logger().info(f'LAP {self.__current_lap} COMPLETE.')
     
     def elaborateConePosition(self):
-        self.get_logger().info(f'ELABORATED {len(str(self.slam_cone.points))}')
+        self.get_logger().info(f'ELABORATED {len(self.slam_cone.points)}')
+        self.get_logger().info(f'ELABORATED {len(self.slam_cone.colors)}')
+
 
         for color, point in zip(self.slam_cone.colors, self.slam_cone.points):
             # Fill blue cones array
