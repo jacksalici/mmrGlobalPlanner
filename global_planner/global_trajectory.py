@@ -1,4 +1,3 @@
-from global_racetrajectory_optimization import opt_mintime_traj
 import numpy as np
 import time
 import json
@@ -8,29 +7,50 @@ import copy
 import matplotlib.pyplot as plt
 import configparser
 import pkg_resources
-from global_racetrajectory_optimization import helper_funcs_glob
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_racetrajectory_optimization"))
+
+import helper_funcs_glob
 
 DEBUG = True
 PLOT = True
 
 
-# set import options ---------------------------------------------------------------------------------------------------
+# set import options 
 imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
             "set_new_start": False,                 # set new starting point (changes order, not coordinates)
             "new_start": np.array([0.0, -47.0]),    # [x_m, y_m]
             "min_track_width": None,                # [m] minimum enforced track width (set None to deactivate)
             "num_laps": 1}                          # number of laps to be driven (significant with powertrain-option),
                                                     # only relevant in mintime-optimization
-
+# lap time calculation table 
+lap_time_mat_opts = {"use_lap_time_mat": False,             # calculate a lap time matrix (diff. top speeds and scales)
+                     "gg_scale_range": [0.3, 1.0],          # range of gg scales to be covered
+                     "gg_scale_stepsize": 0.05,             # step size to be applied
+                     "top_speed_range": [100.0, 150.0],     # range of top speeds to be simulated [in km/h]
+                     "top_speed_stepsize": 5.0,             # step size to be applied
+                     "file": "lap_time_matrix.csv"}         # file name of the lap time matrix (stored in "outputs")
+# plot options
+plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (original and solution based) (mincurv only)
+             "raceline": True,                  # plot optimized path
+             "imported_bounds": False,          # plot imported bounds (analyze difference to interpolated bounds)
+             "raceline_curv": True,             # plot curvature profile of optimized path
+             "racetraj_vel": True,              # plot velocity profile
+             "racetraj_vel_3d": False,          # plot 3D velocity profile above raceline
+             "racetraj_vel_3d_stepsize": 1.0,   # [m] vertical lines stepsize in 3D velocity profile plot
+             "spline_normals": False,           # plot spline normals to check for crossings
+             "mintime_plots": False}            # plot states, controls, friction coeffs etc. (mintime only)
 
 class Trajectory:
     def __init__(self) -> None:
         file_paths = {"veh_params_file": "racecar.ini"}
+        file_paths["track_name"] = "berlin_2018"                                    # Berlin Formula E 2018
 
             
-        # ----------------------------------------------------------------------------------------------------------------------
-        # INITIALIZATION OF PATHS ----------------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # INITIALIZATION OF PATHS 
+
+        file_paths["module"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_racetrajectory_optimization")
 
         # assemble track import path
         file_paths["track_file"] = os.path.join(file_paths["module"], "inputs", "tracks", file_paths["track_name"] + ".csv")
@@ -47,7 +67,7 @@ class Trajectory:
         # file_paths["traj_ltpl_export"] = os.path.join(file_paths["module"], "outputs", "traj_ltpl_cl.csv")
         file_paths["lap_time_mat_export"] = os.path.join(file_paths["module"], "outputs", lap_time_mat_opts["file"])
 
-
+  
         # ----------------------------------------------------------------------------------------------------------------------
         # IMPORT VEHICLE DEPENDENT PARAMETERS ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------------------------------------------
@@ -66,13 +86,10 @@ class Trajectory:
         pars["veh_params"] = json.loads(parser.get('GENERAL_OPTIONS', 'veh_params'))
         pars["vel_calc_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'vel_calc_opts'))
         pars["optim_opts"] = json.loads(parser.get('OPTIMIZATION_OPTIONS', 'optim_opts_mincurv'))
-
-
-
-
-        # ----------------------------------------------------------------------------------------------------------------------
+        file_paths["ggv_file"] = os.path.join(file_paths["module"], "inputs", "veh_dyn_info", pars["ggv_file"])
+        file_paths["ax_max_machines_file"] = os.path.join(file_paths["module"], "inputs", "veh_dyn_info", pars["ax_max_machines_file"])
+        
         # IMPORT TRACK AND VEHICLE DYNAMICS INFORMATION ------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
 
         # save start time
         t_start = time.perf_counter()
@@ -83,13 +100,12 @@ class Trajectory:
                                                                     width_veh=pars["veh_params"]["width"])
 
 
-        ggv = None
-        ax_max_machines = None
+        ggv, ax_max_machines = tph.import_veh_dyn_info.\
+        import_veh_dyn_info(ggv_import_path=file_paths["ggv_file"],
+                            ax_max_machines_import_path=file_paths["ax_max_machines_file"])
 
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # PREPARE REFTRACK -----------------------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # PREPARE REFTRACK 
 
         reftrack_interp, normvec_normalized_interp, a_interp, coeffs_x_interp, coeffs_y_interp = \
             helper_funcs_glob.src.prep_track.prep_track(reftrack_imp=reftrack_imp,
@@ -98,10 +114,8 @@ class Trajectory:
                                                         debug=DEBUG,
                                                         min_width=imp_opts["min_track_width"])
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # CALL OPTIMIZATION ----------------------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
-
+        # CALL OPTIMIZATION 
+        pars_tmp = pars
         alpha_opt, reftrack_interp, normvec_normalized_interp = tph.iqp_handler.iqp_handler(
                         reftrack=reftrack_interp,
                         normvectors=normvec_normalized_interp,
@@ -109,16 +123,14 @@ class Trajectory:
                         kappa_bound=pars["veh_params"]["curvlim"],
                         w_veh=pars["optim_opts"]["width_opt"],
                         print_debug=DEBUG,
-                        plot_debug=["mincurv_curv_lin"],
+                        plot_debug=plot_opts["mincurv_curv_lin"],
                         stepsize_interp=pars["stepsize_opts"]["stepsize_reg"],
                         iters_min=pars["optim_opts"]["iqp_iters_min"],
                         curv_error_allowed=pars["optim_opts"]["iqp_curverror_allowed"])
 
 
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # INTERPOLATE SPLINES TO SMALL DISTANCES BETWEEN RACELINE POINTS -------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # INTERPOLATE SPLINES TO SMALL DISTANCES BETWEEN RACELINE POINTS 
 
         raceline_interp, a_opt, coeffs_x_opt, coeffs_y_opt, spline_inds_opt_interp, t_vals_opt_interp, s_points_opt_interp,\
             spline_lengths_opt, el_lengths_opt_interp = tph.create_raceline.\
@@ -127,9 +139,7 @@ class Trajectory:
                             alpha=alpha_opt,
                             stepsize_interp=pars["stepsize_opts"]["stepsize_interp_after_opt"])
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # CALCULATE HEADING AND CURVATURE --------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # CALCULATE HEADING AND CURVATURE 
 
         # calculate heading and curvature (analytically)
         psi_vel_opt, kappa_opt = tph.calc_head_curv_an.\
@@ -138,9 +148,7 @@ class Trajectory:
                             ind_spls=spline_inds_opt_interp,
                             t_spls=t_vals_opt_interp)
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # CALCULATE VELOCITY AND ACCELERATION PROFILE --------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # CALCULATE VELOCITY AND ACCELERATION PROFILE 
 
         vx_profile_opt = tph.calc_vel_profile.calc_vel_profile(
                             ggv=ggv,
@@ -166,7 +174,7 @@ class Trajectory:
                                                         el_lengths=el_lengths_opt_interp)
         print("INFO: Estimated laptime: %.2fs" % t_profile_cl[-1])
 
-        if PLOT:
+        if plot_opts["racetraj_vel"]:
             s_points = np.cumsum(el_lengths_opt_interp[:-1])
             s_points = np.insert(s_points, 0, 0.0)
 
@@ -180,9 +188,7 @@ class Trajectory:
 
             plt.show()
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # CALCULATE LAP TIMES (AT DIFFERENT SCALES AND TOP SPEEDS) -------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # CALCULATE LAP TIMES (AT DIFFERENT SCALES AND TOP SPEEDS) 
 
         if lap_time_mat_opts["use_lap_time_mat"]:
             # simulate lap times
@@ -240,9 +246,7 @@ class Trajectory:
             # store lap time matrix to file
             np.savetxt(file_paths["lap_time_mat_export"], lap_time_matrix, delimiter=",", fmt="%.3f")
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # DATA POSTPROCESSING --------------------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # DATA POSTPROCESSING 
 
         # arrange data into one trajectory
         trajectory_opt = np.column_stack((s_points_opt_interp,
@@ -260,9 +264,7 @@ class Trajectory:
         # print end time
         print("INFO: Runtime from import to final trajectory was %.2fs" % (time.perf_counter() - t_start))
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # CHECK TRAJECTORY -----------------------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # CHECK TRAJECTORY 
 
         bound1, bound2 = helper_funcs_glob.src.check_traj.\
             check_traj(reftrack=reftrack_interp,
@@ -278,9 +280,7 @@ class Trajectory:
                     mass_veh=pars["veh_params"]["mass"],
                     dragcoeff=pars["veh_params"]["dragcoeff"])
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # EXPORT ---------------------------------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # EXPORT 
 
         # export race trajectory  to CSV
         if "traj_race_export" in file_paths.keys():
@@ -299,9 +299,8 @@ class Trajectory:
 
         print("INFO: Finished export of trajectory:", time.strftime("%H:%M:%S"))
 
-        # ----------------------------------------------------------------------------------------------------------------------
-        # PLOT RESULTS ---------------------------------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+
+        # PLOT RESULTS 
 
         # get bound of imported map (for reference in final plot)
         bound1_imp = None
@@ -327,3 +326,6 @@ class Trajectory:
                                                         bound1_interp=bound1,
                                                         bound2_interp=bound2,
                                                         trajectory=trajectory_opt)
+
+       
+traj = Trajectory()
