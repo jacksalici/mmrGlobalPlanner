@@ -86,6 +86,7 @@ class Trajectory:
         pars["veh_params"] = json.loads(parser.get('GENERAL_OPTIONS', 'veh_params'))
         pars["vel_calc_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'vel_calc_opts'))
         pars["optim_opts"] = json.loads(parser.get('OPTIMIZATION_OPTIONS', 'optim_opts_mincurv'))
+        
         file_paths["ggv_file"] = os.path.join(file_paths["module"], "inputs", "veh_dyn_info", pars["ggv_file"])
         file_paths["ax_max_machines_file"] = os.path.join(file_paths["module"], "inputs", "veh_dyn_info", pars["ax_max_machines_file"])
         

@@ -12,8 +12,8 @@ class Track():
     lines = Enum('Lines', ['TRACK', 'YELLOW', 'BLUE'])
     __points = {}
 
-    def addLine(self, type: lines, points: list):
-        self.__points[type] = points
+    def addLine(self, line: lines, points: list):
+        self.__points[line] = points
 
     def thereAreBoundaries(self) -> bool:
         return self.lines.YELLOW in self.__points and self.lines.BLUE in self.__points
@@ -23,6 +23,8 @@ class GlobalPlanner(Node):
     
     def __init__(self):
         super().__init__('race_status_sub')
+        self.get_logger().info(f'INIT GLOBAL PLANNER')
+
         self.race_status_sub = self.create_subscription(
             RaceStatus,
             '/planning/race_status',
@@ -41,17 +43,29 @@ class GlobalPlanner(Node):
             self.boundaries_sub_callback,
             10)
         
+        self.track = Track()
+        
+        
     def waipoints_sub_callback(self, msg: Marker):
-        # after first lap, as soon as first slam cone marker is listened, elaborate waypoints and destroy subs
-        #first lap ends when the lap counter turns to 2.
-        self.get_logger().info(f'READ {len(msg.points)}')
+        #first lap ends when the lap counter turns to 2, then save the waypoint_all points. 
+        self.track.addLine(points=msg.points, line=self.track.lines.TRACK)
+        self.get_logger().info(f'SAVED WAYPOINTS ({len(msg.points)})')
 
-        if self.__current_lap == 2:
-            self.waypoints = msg
-            self.elaborateTrackline()
-            self.destroy_subscription(self.race_status_sub)
-            self.destroy_subscription(self.waypoints_sub)
+        self.elaborateTrackline()
 
+    def boundaries_sub_callback(self, msg: Marker):
+        line = None
+
+        if msg.color.r == 0 and msg.color.g == 0 and msg.color.b == 1:
+            line = self.track.lines.BLUE
+        elif msg.color.r == 1 and msg.color.g == 1 and msg.color.b == 0:
+            line = self.track.lines.YELLOW
+        else:
+            self.get_logger().warning(f'READ UNKNOWN BOUNDARIES ({msg.color})')
+            return
+
+        self.track.addLine(line=line, points=msg.points)
+        self.get_logger().info(f'READ BOUNDARIES [{line}] ({len(msg.points)} points)')
 
     def race_status_sub_callback(self, msg: RaceStatus):
         # currentLap represent the number of laps completed. 
@@ -60,8 +74,7 @@ class GlobalPlanner(Node):
             self.get_logger().info(f'LAP {self.__current_lap} COMPLETE.')
     
     def elaborateTrackline(self):
-        self.get_logger().info(f'ELABORATED {len(self.waypoints.points)}')
-        self.get_logger().info(f'ELABORATED {len(self.waypoints.colors)}')
+        self.get_logger().info('ELABORATING')
 
 
         
