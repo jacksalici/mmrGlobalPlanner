@@ -4,16 +4,19 @@ from rclpy.node import Node
 from visualization_msgs.msg import Marker
 from mmr_base.msg import RaceStatus
 
-import json
+import numpy as np
 
+from enum import Enum
+ 
+class Track():
+    lines = Enum('Lines', ['TRACK', 'YELLOW', 'BLUE'])
+    __points = {}
 
-class Cones():
-    b = []
-    y = []
+    def addLine(self, type: lines, points: list):
+        self.__points[type] = points
 
-    def dump(self, file = 'coords.json'):
-        with open(file, "w") as f:
-            json.dump({"yellow": self.y, "blue": self.b}, f)
+    def thereAreBoundaries(self) -> bool:
+        return self.lines.YELLOW in self.__points and self.lines.BLUE in self.__points
 
 class GlobalPlanner(Node):    
     __current_lap = 0
@@ -26,24 +29,29 @@ class GlobalPlanner(Node):
             self.race_status_sub_callback,
             10)
         
-        self.slam_cone_sub = self.create_subscription(
+        self.waypoints_sub = self.create_subscription(
             Marker,
-            '/slam/cones_positions',
-            self.slam_cone_sub_callback,
+            '/planning/waypoints_all',
+            self.waipoints_sub_callback,
             10)
         
-        self.cones = Cones()
-
-    def slam_cone_sub_callback(self, msg: Marker):
-        # after first lap, as soon as first slam cone marker is listened, elaborate cone and destroy subs
+        self.boundaries_sub = self.create_subscription(
+            Marker,
+            '/planning/boundaries_all',
+            self.boundaries_sub_callback,
+            10)
+        
+    def waipoints_sub_callback(self, msg: Marker):
+        # after first lap, as soon as first slam cone marker is listened, elaborate waypoints and destroy subs
         #first lap ends when the lap counter turns to 2.
         self.get_logger().info(f'READ {len(msg.points)}')
 
         if self.__current_lap == 2:
-            self.slam_cone = msg
-            self.elaborateConePosition()
+            self.waypoints = msg
+            self.elaborateTrackline()
             self.destroy_subscription(self.race_status_sub)
-            self.destroy_subscription(self.slam_cone_sub)
+            self.destroy_subscription(self.waypoints_sub)
+
 
     def race_status_sub_callback(self, msg: RaceStatus):
         # currentLap represent the number of laps completed. 
@@ -51,20 +59,11 @@ class GlobalPlanner(Node):
             self.__current_lap = msg.current_lap
             self.get_logger().info(f'LAP {self.__current_lap} COMPLETE.')
     
-    def elaborateConePosition(self):
-        self.get_logger().info(f'ELABORATED {len(self.slam_cone.points)}')
-        self.get_logger().info(f'ELABORATED {len(self.slam_cone.colors)}')
+    def elaborateTrackline(self):
+        self.get_logger().info(f'ELABORATED {len(self.waypoints.points)}')
+        self.get_logger().info(f'ELABORATED {len(self.waypoints.colors)}')
 
 
-        for color, point in zip(self.slam_cone.colors, self.slam_cone.points):
-            # Fill blue cones array
-            if color.r < 0.1 and color.g < 0.1 and color.b > 0.9:
-                self.cones.b.append([point.x, point.y])
-            # Fill yellow cones array
-            elif color.r > 0.9 and color.g > 0.9 and color.b < 0.1:
-                self.cones.b.append([point.x, point.y])
-
-        self.cones.dump()
         
 def main(args=None):
     rclpy.init(args=args)
