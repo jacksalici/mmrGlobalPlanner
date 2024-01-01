@@ -44,90 +44,86 @@ plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (orig
 
 class Trajectory:
     def __init__(self) -> None:
-        file_paths = {"veh_params_file": "racecar.ini"}
-        file_paths["track_name"] = "berlin_2018"                                    # Berlin Formula E 2018
+        self.file_paths = {"veh_params_file": "racecar.ini"}
+        self.file_paths["track_name"] = "berlin_2018"                                    # Berlin Formula E 2018
 
             
         # INITIALIZATION OF PATHS 
 
-        file_paths["module"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_racetrajectory_optimization")
+        self.file_paths["module"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_racetrajectory_optimization")
 
         # assemble track import path
-        file_paths["track_file"] = os.path.join(file_paths["module"], "inputs", "tracks", file_paths["track_name"] + ".csv")
+        self.file_paths["track_file"] = os.path.join(self.file_paths["module"], "inputs", "tracks", self.file_paths["track_name"] + ".csv")
 
-        # assemble friction map import paths
-        file_paths["tpamap"] = os.path.join(file_paths["module"], "inputs", "frictionmaps",
-                                            file_paths["track_name"] + "_tpamap.csv")
 
         # create outputs folder(s)
-        os.makedirs(file_paths["module"] + "/outputs", exist_ok=True)
+        os.makedirs(self.file_paths["module"] + "/outputs", exist_ok=True)
 
         # assemble export paths
-        file_paths["traj_race_export"] = os.path.join(file_paths["module"], "outputs", "traj_race_cl.csv")
+        self.file_paths["traj_race_export"] = os.path.join(self.file_paths["module"], "outputs", "traj_race_cl.csv")
         # file_paths["traj_ltpl_export"] = os.path.join(file_paths["module"], "outputs", "traj_ltpl_cl.csv")
-        file_paths["lap_time_mat_export"] = os.path.join(file_paths["module"], "outputs", lap_time_mat_opts["file"])
+        self.file_paths["lap_time_mat_export"] = os.path.join(self.file_paths["module"], "outputs", lap_time_mat_opts["file"])
 
   
-        # ----------------------------------------------------------------------------------------------------------------------
-        # IMPORT VEHICLE DEPENDENT PARAMETERS ----------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------------------------------------------
+        # IMPORT VEHICLE DEPENDENT PARAMETERS 
 
         # load vehicle parameter file into a "pars" dict
         parser = configparser.ConfigParser()
-        pars = {}
+        self.pars = {}
 
-        if not parser.read(os.path.join(file_paths["module"], "params", file_paths["veh_params_file"])):
+        if not parser.read(os.path.join(self.file_paths["module"], "params", self.file_paths["veh_params_file"])):
             raise ValueError('Specified config file does not exist or is empty!')
 
-        pars["ggv_file"] = json.loads(parser.get('GENERAL_OPTIONS', 'ggv_file'))
-        pars["ax_max_machines_file"] = json.loads(parser.get('GENERAL_OPTIONS', 'ax_max_machines_file'))
-        pars["stepsize_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'stepsize_opts'))
-        pars["reg_smooth_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'reg_smooth_opts'))
-        pars["veh_params"] = json.loads(parser.get('GENERAL_OPTIONS', 'veh_params'))
-        pars["vel_calc_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'vel_calc_opts'))
-        pars["optim_opts"] = json.loads(parser.get('OPTIMIZATION_OPTIONS', 'optim_opts_mincurv'))
+        self.pars["ggv_file"] = json.loads(parser.get('GENERAL_OPTIONS', 'ggv_file'))
+        self.pars["ax_max_machines_file"] = json.loads(parser.get('GENERAL_OPTIONS', 'ax_max_machines_file'))
+        self.pars["stepsize_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'stepsize_opts'))
+        self.pars["reg_smooth_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'reg_smooth_opts'))
+        self.pars["veh_params"] = json.loads(parser.get('GENERAL_OPTIONS', 'veh_params'))
+        self.pars["vel_calc_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'vel_calc_opts'))
+        self.pars["optim_opts"] = json.loads(parser.get('OPTIMIZATION_OPTIONS', 'optim_opts_mincurv'))
         
-        file_paths["ggv_file"] = os.path.join(file_paths["module"], "inputs", "veh_dyn_info", pars["ggv_file"])
-        file_paths["ax_max_machines_file"] = os.path.join(file_paths["module"], "inputs", "veh_dyn_info", pars["ax_max_machines_file"])
+        self.file_paths["ggv_file"] = os.path.join(self.file_paths["module"], "inputs", "veh_dyn_info", self.pars["ggv_file"])
+        self.file_paths["ax_max_machines_file"] = os.path.join(self.file_paths["module"], "inputs", "veh_dyn_info", self.pars["ax_max_machines_file"])
         
-        # IMPORT TRACK AND VEHICLE DYNAMICS INFORMATION ------------------------------------------------------------------------
+    def optimize(self):
+        # IMPORT TRACK AND VEHICLE DYNAMICS INFORMATION 
 
         # save start time
         t_start = time.perf_counter()
 
         # import track
         reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts,
-                                                                    file_path=file_paths["track_file"],
-                                                                    width_veh=pars["veh_params"]["width"])
+                                                                    file_path=self.file_paths["track_file"],
+                                                                    width_veh=self.pars["veh_params"]["width"])
 
 
         ggv, ax_max_machines = tph.import_veh_dyn_info.\
-        import_veh_dyn_info(ggv_import_path=file_paths["ggv_file"],
-                            ax_max_machines_import_path=file_paths["ax_max_machines_file"])
+        import_veh_dyn_info(ggv_import_path=self.file_paths["ggv_file"],
+                            ax_max_machines_import_path=self.file_paths["ax_max_machines_file"])
 
 
         # PREPARE REFTRACK 
 
         reftrack_interp, normvec_normalized_interp, a_interp, coeffs_x_interp, coeffs_y_interp = \
             helper_funcs_glob.src.prep_track.prep_track(reftrack_imp=reftrack_imp,
-                                                        reg_smooth_opts=pars["reg_smooth_opts"],
-                                                        stepsize_opts=pars["stepsize_opts"],
+                                                        reg_smooth_opts=self.pars["reg_smooth_opts"],
+                                                        stepsize_opts=self.pars["stepsize_opts"],
                                                         debug=DEBUG,
                                                         min_width=imp_opts["min_track_width"])
 
         # CALL OPTIMIZATION 
-        pars_tmp = pars
+        pars_tmp = self.pars
         alpha_opt, reftrack_interp, normvec_normalized_interp = tph.iqp_handler.iqp_handler(
                         reftrack=reftrack_interp,
                         normvectors=normvec_normalized_interp,
                         A=a_interp,
-                        kappa_bound=pars["veh_params"]["curvlim"],
-                        w_veh=pars["optim_opts"]["width_opt"],
+                        kappa_bound=self.pars["veh_params"]["curvlim"],
+                        w_veh=self.pars["optim_opts"]["width_opt"],
                         print_debug=DEBUG,
                         plot_debug=plot_opts["mincurv_curv_lin"],
-                        stepsize_interp=pars["stepsize_opts"]["stepsize_reg"],
-                        iters_min=pars["optim_opts"]["iqp_iters_min"],
-                        curv_error_allowed=pars["optim_opts"]["iqp_curverror_allowed"])
+                        stepsize_interp=self.pars["stepsize_opts"]["stepsize_reg"],
+                        iters_min=self.pars["optim_opts"]["iqp_iters_min"],
+                        curv_error_allowed=self.pars["optim_opts"]["iqp_curverror_allowed"])
 
 
 
@@ -138,7 +134,7 @@ class Trajectory:
             create_raceline(refline=reftrack_interp[:, :2],
                             normvectors=normvec_normalized_interp,
                             alpha=alpha_opt,
-                            stepsize_interp=pars["stepsize_opts"]["stepsize_interp_after_opt"])
+                            stepsize_interp=self.pars["stepsize_opts"]["stepsize_interp_after_opt"])
 
         # CALCULATE HEADING AND CURVATURE 
 
@@ -154,14 +150,14 @@ class Trajectory:
         vx_profile_opt = tph.calc_vel_profile.calc_vel_profile(
                             ggv=ggv,
                             ax_max_machines=ax_max_machines,
-                            v_max=pars["veh_params"]["v_max"],
+                            v_max=self.pars["veh_params"]["v_max"],
                             kappa=kappa_opt,
                             el_lengths=el_lengths_opt_interp,
                             closed=True,
-                            filt_window=pars["vel_calc_opts"]["vel_profile_conv_filt_window"],
-                            dyn_model_exp=pars["vel_calc_opts"]["dyn_model_exp"],
-                            drag_coeff=pars["veh_params"]["dragcoeff"],
-                            m_veh=pars["veh_params"]["mass"])
+                            filt_window=self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"],
+                            dyn_model_exp=self.pars["vel_calc_opts"]["dyn_model_exp"],
+                            drag_coeff=self.pars["veh_params"]["dragcoeff"],
+                            m_veh=self.pars["veh_params"]["mass"])
 
         # calculate longitudinal acceleration profile
         vx_profile_opt_cl = np.append(vx_profile_opt, vx_profile_opt[0])
@@ -224,11 +220,11 @@ class Trajectory:
                                         v_max=top_speed,
                                         kappa=kappa_opt,
                                         el_lengths=el_lengths_opt_interp,
-                                        dyn_model_exp=pars["vel_calc_opts"]["dyn_model_exp"],
-                                        filt_window=pars["vel_calc_opts"]["vel_profile_conv_filt_window"],
+                                        dyn_model_exp=self.pars["vel_calc_opts"]["dyn_model_exp"],
+                                        filt_window=self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"],
                                         closed=True,
-                                        drag_coeff=pars["veh_params"]["dragcoeff"],
-                                        m_veh=pars["veh_params"]["mass"])
+                                        drag_coeff=self.pars["veh_params"]["dragcoeff"],
+                                        m_veh=self.pars["veh_params"]["mass"])
 
                     # calculate longitudinal acceleration profile
                     vx_profile_opt_cl = np.append(vx_profile_opt, vx_profile_opt[0])
@@ -245,7 +241,7 @@ class Trajectory:
                     lap_time_matrix[i + 1, j + 1] = t_profile_cl[-1]
 
             # store lap time matrix to file
-            np.savetxt(file_paths["lap_time_mat_export"], lap_time_matrix, delimiter=",", fmt="%.3f")
+            np.savetxt(self.file_paths["lap_time_mat_export"], lap_time_matrix, delimiter=",", fmt="%.3f")
 
         # DATA POSTPROCESSING 
 
@@ -270,28 +266,28 @@ class Trajectory:
         bound1, bound2 = helper_funcs_glob.src.check_traj.\
             check_traj(reftrack=reftrack_interp,
                     reftrack_normvec_normalized=normvec_normalized_interp,
-                    length_veh=pars["veh_params"]["length"],
-                    width_veh=pars["veh_params"]["width"],
+                    length_veh=self.pars["veh_params"]["length"],
+                    width_veh=self.pars["veh_params"]["width"],
                     debug=DEBUG,
                     trajectory=trajectory_opt,
                     ggv=ggv,
                     ax_max_machines=ax_max_machines,
-                    v_max=pars["veh_params"]["v_max"],
-                    curvlim=pars["veh_params"]["curvlim"],
-                    mass_veh=pars["veh_params"]["mass"],
-                    dragcoeff=pars["veh_params"]["dragcoeff"])
+                    v_max=self.pars["veh_params"]["v_max"],
+                    curvlim=self.pars["veh_params"]["curvlim"],
+                    mass_veh=self.pars["veh_params"]["mass"],
+                    dragcoeff=self.pars["veh_params"]["dragcoeff"])
 
         # EXPORT 
 
         # export race trajectory  to CSV
-        if "traj_race_export" in file_paths.keys():
-            helper_funcs_glob.src.export_traj_race.export_traj_race(file_paths=file_paths,
+        if "traj_race_export" in self.file_paths.keys():
+            helper_funcs_glob.src.export_traj_race.export_traj_race(file_paths=self.file_paths,
                                                                     traj_race=traj_race_cl)
 
 
         # if requested, export trajectory including map information (via normal vectors) to CSV
-        if "traj_ltpl_export" in file_paths.keys():
-            helper_funcs_glob.src.export_traj_ltpl.export_traj_ltpl(file_paths=file_paths,
+        if "traj_ltpl_export" in self.file_paths.keys():
+            helper_funcs_glob.src.export_traj_ltpl.export_traj_ltpl(file_paths=self.file_paths,
                                                                     spline_lengths_opt=spline_lengths_opt,
                                                                     trajectory_opt=trajectory_opt,
                                                                     reftrack=reftrack_interp,
@@ -319,8 +315,8 @@ class Trajectory:
 
         # plot results
         helper_funcs_glob.src.result_plots.result_plots(plot_opts=plot_opts,
-                                                        width_veh_opt=pars["optim_opts"]["width_opt"],
-                                                        width_veh_real=pars["veh_params"]["width"],
+                                                        width_veh_opt=self.pars["optim_opts"]["width_opt"],
+                                                        width_veh_real=self.pars["veh_params"]["width"],
                                                         refline=reftrack_interp[:, :2],
                                                         bound1_imp=bound1_imp,
                                                         bound2_imp=bound2_imp,
