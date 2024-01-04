@@ -2,14 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from enum import Enum
 
+FAKE_DISTANCE = 1.5
+
 class Track():
     lines = Enum('Lines', ['TRACK', 'YELLOW', 'BLUE'])
     __points = {}
     __reftrack = None
 
     def __init__(self, debug = False) -> None:
-        if debug:
-            self.debug = True
+        self.debug = debug
 
     def add_line(self, line: lines, points: list):
         self.__points[line] = np.array(points, dtype=np.float)
@@ -17,33 +18,34 @@ class Track():
     def has_boundaries(self) -> bool:
         return self.lines.YELLOW in self.__points and self.lines.BLUE in self.__points
     
+    def has_trackline(self) -> bool:
+        return self.lines.TRACK in self.__points
+    
     def __distance(self, point, segmentsA, segmentsB):
         cross_product = np.cross(segmentsA - point, point - segmentsB)
         norm_b_minus_a = np.linalg.norm(segmentsB - segmentsA, axis=1)
         distance = np.min(np.abs(cross_product) / norm_b_minus_a)
         if self.debug:
             print(f"Min distance for {point}: {distance}")
-        return distance
-    
+        return distance if not FAKE_DISTANCE else FAKE_DISTANCE
     
     def __find_distances(self, midline_points, boundaries):
         return np.array([self.__distance(point, boundaries[:-1, :], boundaries[1:, :]) for point in midline_points])
         
-
-    
     def create_reftrack(self):
         w_l = self.__find_distances(self.__points[self.lines.TRACK], self.__points[self.lines.BLUE]).reshape(-1,1)
         w_r = self.__find_distances(self.__points[self.lines.TRACK], self.__points[self.lines.YELLOW  ]).reshape(-1,1)
 
         self.__reftrack = np.concatenate((self.__points[self.lines.TRACK], w_r, w_l), axis=-1)
 
-        print(self.__reftrack)
+        if self.debug:
+            print(self.__reftrack)
+
+    def get_reftrack(self) -> np.ndarray:
+        return self.__reftrack
 
     def is_reftrack_created(self):
         return self.__reftrack != None
-
-
-
 
 # just for testing
 

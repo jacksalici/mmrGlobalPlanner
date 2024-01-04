@@ -5,6 +5,7 @@ from visualization_msgs.msg import Marker
 from mmr_base.msg import RaceStatus
 
 from .global_track import Track
+from .global_trajectory import Trajectory
  
 
 class GlobalPlanner(Node):    
@@ -12,7 +13,6 @@ class GlobalPlanner(Node):
     
     def __init__(self):
         super().__init__('race_status_sub')
-        
 
         self.race_status_sub = self.create_subscription(
             RaceStatus,
@@ -32,8 +32,8 @@ class GlobalPlanner(Node):
             self.boundaries_sub_callback,
             10)
         
-        self.track = Track()
-
+        self.track = Track(debug=True)
+        self.trajectory = Trajectory()
         
         a = """Global planner initializated.
 
@@ -46,10 +46,6 @@ class GlobalPlanner(Node):
         
         self.get_logger().info(a)
         
-
-
-
-
     def add_point_line(self, points, line):
         self.track.add_line(points=[[point.x, point.y] for point in points], line=line)
 
@@ -76,17 +72,22 @@ class GlobalPlanner(Node):
         self.get_logger().info(f'Saved boundaries [{line}] ({len(msg.points)} points).')
 
         if self.track.has_boundaries():
+            self.elaborateTrackline()
             self.destroy_subscription(self.boundaries_sub)
 
     def race_status_sub_callback(self, msg: RaceStatus):
         # currentLap represent the number of laps completed. 
         if msg.current_lap != self.__current_lap:
             self.__current_lap = msg.current_lap
-            self.get_logger().info(f'Lap {self.__current_lap} (minus 1) completed.')
+            self.get_logger().info(f'Lap {self.__current_lap} completed.')
     
     def elaborateTrackline(self):
-        self.get_logger().info('ELABORATING...')
+        if self.track.is_reftrack_created() or not self.track.has_boundaries() or not self.track.has_trackline():
+            return
+        
+        self.get_logger().info('ELABORATING TRACKLINE')
         self.track.create_reftrack()
+        self.trajectory.optimize(self.track.get_reftrack())
 
 def main(args=None):
     rclpy.init(args=args)

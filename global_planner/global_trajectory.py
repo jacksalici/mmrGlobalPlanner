@@ -45,16 +45,11 @@ plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (orig
 class Trajectory:
     def __init__(self) -> None:
         self.file_paths = {"veh_params_file": "racecar.ini"}
-        self.file_paths["track_name"] = "berlin_2018"                                    # Berlin Formula E 2018
 
             
         # INITIALIZATION OF PATHS 
 
-        self.file_paths["module"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_racetrajectory_optimization")
-
-        # assemble track import path
-        self.file_paths["track_file"] = os.path.join(self.file_paths["module"], "inputs", "tracks", self.file_paths["track_name"] + ".csv")
-
+        self.file_paths["module"] = os.path.dirname(os.path.abspath(__file__))
 
         # create outputs folder(s)
         os.makedirs(self.file_paths["module"] + "/outputs", exist_ok=True)
@@ -71,7 +66,7 @@ class Trajectory:
         parser = configparser.ConfigParser()
         self.pars = {}
 
-        if not parser.read(os.path.join(self.file_paths["module"], "params", self.file_paths["veh_params_file"])):
+        if not parser.read(os.path.join(self.file_paths["module"], "input", self.file_paths["veh_params_file"])):
             raise ValueError('Specified config file does not exist or is empty!')
 
         self.pars["ggv_file"] = json.loads(parser.get('GENERAL_OPTIONS', 'ggv_file'))
@@ -82,19 +77,17 @@ class Trajectory:
         self.pars["vel_calc_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'vel_calc_opts'))
         self.pars["optim_opts"] = json.loads(parser.get('OPTIMIZATION_OPTIONS', 'optim_opts_mincurv'))
         
-        self.file_paths["ggv_file"] = os.path.join(self.file_paths["module"], "inputs", "veh_dyn_info", self.pars["ggv_file"])
-        self.file_paths["ax_max_machines_file"] = os.path.join(self.file_paths["module"], "inputs", "veh_dyn_info", self.pars["ax_max_machines_file"])
+        self.file_paths["ggv_file"] = os.path.join(self.file_paths["module"], "input", self.pars["ggv_file"])
+        self.file_paths["ax_max_machines_file"] = os.path.join(self.file_paths["module"], "input", self.pars["ax_max_machines_file"])
         
-    def optimize(self):
+    def optimize(self, rtrack = np.array([])):
         # IMPORT TRACK AND VEHICLE DYNAMICS INFORMATION 
 
         # save start time
         t_start = time.perf_counter()
 
         # import track
-        reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts,
-                                                                    file_path=self.file_paths["track_file"],
-                                                                    width_veh=self.pars["veh_params"]["width"])
+        reftrack_imp = rtrack 
 
 
         ggv, ax_max_machines = tph.import_veh_dyn_info.\
