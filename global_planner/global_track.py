@@ -20,18 +20,25 @@ class Track():
     
     def has_trackline(self) -> bool:
         return self.lines.TRACK in self.__points
-    
-    def __distance(self, point, segmentsA, segmentsB):
-        cross_product = np.cross(segmentsA - point, point - segmentsB)
-        norm_b_minus_a = np.linalg.norm(segmentsB - segmentsA, axis=1)
-        distance = np.min(np.abs(cross_product) / norm_b_minus_a)
+
+    def __track_bound_crossprod(self, waypoint,c_one,c_two):
+        ac=waypoint-c_one
+        ab=c_two-c_one
+        cross_product = np.cross(ab,ac)
+        norm_ab = np.linalg.norm(ab)
+        norm_cross = np.linalg.norm(cross_product)
+        distance = norm_cross / norm_ab
         if self.debug:
-            print(f"Min distance for {point}: {distance}")
-        return distance if not FAKE_DISTANCE else FAKE_DISTANCE
+            print(f"Min distance for {waypoint}: {distance}")
+        return distance
+
+    def __find_distances(self, center_line, boundary):
+        n = len(center_line)
+        return np.array([
+            self.__track_bound_crossprod(center_line[i],boundary[i],boundary[(i+1)%(n-1)])
+            for i in range(n)
+            ])
     
-    def __find_distances(self, midline_points, boundaries):
-        return np.array([self.__distance(point, boundaries[:-1, :], boundaries[1:, :]) for point in midline_points])
-        
     def create_reftrack(self):
         w_l = self.__find_distances(self.__points[self.lines.TRACK], self.__points[self.lines.BLUE]).reshape(-1,1)
         w_r = self.__find_distances(self.__points[self.lines.TRACK], self.__points[self.lines.YELLOW  ]).reshape(-1,1)
@@ -46,6 +53,15 @@ class Track():
 
     def is_reftrack_created(self):
         return self.__reftrack != None
+    
+    def points_to_file(self, file):
+        import json 
+        d = {}
+        for k, i in self.__points.items():
+            d[str(k).split('.')[1]] = i.tolist()
+        print(d)
+        json.dump(d, open(file, 'w'), 
+                indent=4) ### this saves the array in .json format
 
 # just for testing
 
@@ -71,6 +87,8 @@ def main():
 
     if t.has_boundaries() and not t.is_reftrack_created():
         t.create_reftrack()
+    
+    t.points_to_file("test.json")
 
 
 if __name__ == "__main__":

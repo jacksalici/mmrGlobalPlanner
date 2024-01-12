@@ -86,8 +86,9 @@ class GlobalPlanner(Node):
             return
         
         self.get_logger().info('ELABORATING TRACKLINE')
-        self.track.create_reftrack()
-        self.trajectory.optimize(self.track.get_reftrack())
+        #self.track.create_reftrack()
+        #self.trajectory.optimize(self.track.get_reftrack())
+        self.track.points_to_file("bag.json")
 
 def main(args=None):
     rclpy.init(args=args)
