@@ -10,6 +10,6 @@ UNIMORE driverless Formula Student ROS package for the global planning of the tr
 colcon build --packages-select global_planner --continue-on-error --symlink-install
 
 #run
-ros2 run global_planner launcher
+ros2 run global_planner runner
 
 ```
