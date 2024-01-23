@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "glo
 import helper_funcs_glob
 
 DEBUG = True
-PLOT = True
+PLOT = False
 
 
 # set import options 
@@ -316,6 +316,8 @@ class Trajectory:
                                                         bound1_interp=bound1,
                                                         bound2_interp=bound2,
                                                         trajectory=trajectory_opt)
+        
+        return "Optimization finished"
 
        
 traj = Trajectory()

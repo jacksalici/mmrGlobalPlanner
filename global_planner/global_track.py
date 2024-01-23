@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from enum import Enum
 
-FAKE_DISTANCE = 1.5
+FAKE_DISTANCE = 1.4
 
 class Track():
     lines = Enum('Lines', ['TRACK', 'YELLOW', 'BLUE'])
@@ -30,14 +30,11 @@ class Track():
         distance = norm_cross / norm_ab
         if self.debug:
             print(f"Min distance for {waypoint}: {distance}")
-        return distance
+        return distance 
 
     def __find_distances(self, center_line, boundary):
         n = len(center_line)
-        return np.array([
-            self.__track_bound_crossprod(center_line[i],boundary[i],boundary[(i+1)%(n-1)])
-            for i in range(n)
-            ])
+        return np.array([FAKE_DISTANCE for i in range(n)])
     
     def create_reftrack(self):
         w_l = self.__find_distances(self.__points[self.lines.TRACK], self.__points[self.lines.BLUE]).reshape(-1,1)
