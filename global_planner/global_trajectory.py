@@ -14,7 +14,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "glo
 import helper_funcs_glob
 
 DEBUG = True
-PLOT = False
 
 
 # set import options 
@@ -33,10 +32,10 @@ lap_time_mat_opts = {"use_lap_time_mat": False,             # calculate a lap ti
                      "file": "lap_time_matrix.csv"}         # file name of the lap time matrix (stored in "outputs")
 # plot options
 plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (original and solution based) (mincurv only)
-             "raceline": True,                  # plot optimized path
+             "raceline": False,                  # plot optimized path - DEBUG TRUE
              "imported_bounds": False,          # plot imported bounds (analyze difference to interpolated bounds)
-             "raceline_curv": True,             # plot curvature profile of optimized path
-             "racetraj_vel": True,              # plot velocity profile
+             "raceline_curv": False,             # plot curvature profile of optimized path - DEBUG TRUE
+             "racetraj_vel": False,              # plot velocity profile - DEBUG TRUE
              "racetraj_vel_3d": False,          # plot 3D velocity profile above raceline
              "racetraj_vel_3d_stepsize": 1.0,   # [m] vertical lines stepsize in 3D velocity profile plot
              "spline_normals": False,           # plot spline normals to check for crossings
