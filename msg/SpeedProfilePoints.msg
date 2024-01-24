@@ -1,0 +1,1 @@
+SpeedProfilePoint[] points

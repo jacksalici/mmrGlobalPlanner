@@ -316,7 +316,17 @@ class Trajectory:
                                                         bound2_interp=bound2,
                                                         trajectory=trajectory_opt)
         
+        self._trajectory_opt = {
+            "raceline": raceline_interp,
+            "speed": vx_profile_opt,
+            "acceleration": ax_profile_opt
+        }
         return "Optimization finished"
 
+    def get_trajectory_opt(self):
+        assert self._trajectory_opt, "Output traajectory called before initialization."
+        return self._trajectory_opt
+        
+        
        
 traj = Trajectory()
