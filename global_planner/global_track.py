@@ -42,9 +42,6 @@ class Track():
 
         self.__reftrack = np.concatenate((self.__points[self.lines.TRACK], w_r, w_l), axis=-1)
 
-        if self.debug:
-            print(self.__reftrack)
-
     def get_reftrack(self) -> np.ndarray:
         return self.__reftrack
 

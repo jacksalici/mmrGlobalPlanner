@@ -1,2 +1,0 @@
-geometry_msgs/Point point
-ackermann_msgs/AckermannDrive.msg ackerman_point
