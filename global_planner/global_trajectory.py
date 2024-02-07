@@ -32,10 +32,10 @@ lap_time_mat_opts = {"use_lap_time_mat": False,             # calculate a lap ti
                      "file": "lap_time_matrix.csv"}         # file name of the lap time matrix (stored in "outputs")
 # plot options
 plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (original and solution based) (mincurv only)
-             "raceline": False,                  # plot optimized path - DEBUG TRUE
+             "raceline": DEBUG,                  # plot optimized path - DEBUG TRUE
              "imported_bounds": False,          # plot imported bounds (analyze difference to interpolated bounds)
-             "raceline_curv": False,             # plot curvature profile of optimized path - DEBUG TRUE
-             "racetraj_vel": False,              # plot velocity profile - DEBUG TRUE
+             "raceline_curv": DEBUG,             # plot curvature profile of optimized path - DEBUG TRUE
+             "racetraj_vel": DEBUG,              # plot velocity profile - DEBUG TRUE
              "racetraj_vel_3d": False,          # plot 3D velocity profile above raceline
              "racetraj_vel_3d_stepsize": 1.0,   # [m] vertical lines stepsize in 3D velocity profile plot
              "spline_normals": False,           # plot spline normals to check for crossings
@@ -324,9 +324,18 @@ class Trajectory:
         return "Optimization finished"
 
     def get_trajectory_opt(self):
-        assert self._trajectory_opt, "Output traajectory called before initialization."
+        assert self._trajectory_opt, "Output trajectory called before initialization."
         return self._trajectory_opt
         
         
-       
-traj = Trajectory()
+#for debug
+if __name__ == "__main__":
+    DEBUG = True       
+    traj = Trajectory()
+
+    if not sys.argv[1]:
+        print("First argument must be the location of the trajectory file.")
+    else:
+        points = np.loadtxt(sys.argv[1], delimiter=',')
+        print(points.size)
+        traj.optimize(points)
