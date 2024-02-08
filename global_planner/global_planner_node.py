@@ -35,6 +35,12 @@ class GlobalPlanner(Node):
             self.boundaries_sub_callback,
             10)
         
+        self.distances_sub = self.create_subscription(
+            Marker,
+            '/planning/distances_all',
+            self.distances_sub_callback,
+            10)
+        
         self.speed_profile_pub = self.create_publisher(SpeedProfilePoints, '/planning/speedProfilePoints', 10)
         
         self.track = Track(debug=True)
@@ -55,7 +61,6 @@ class GlobalPlanner(Node):
         self.track.add_line(points=[[point.x, point.y] for point in points], line=line)
 
     def waipoints_sub_callback(self, msg: Marker):
-        #first lap ends when the lap counter turns to 2, then save the waypoint_all points. 
         self.add_point_line(points=msg.points, line=self.track.lines.TRACK)
         self.get_logger().info(f'Saved waypoints ({len(msg.points)})')
 
@@ -88,6 +93,10 @@ class GlobalPlanner(Node):
             if self.__current_lap >2:
                 self.destroy_subscription(self.race_status_sub)
     
+     
+    def distances_sub_callback(self, msg: Marker):
+        pass
+    
     def elaborateTrackline(self):
         if self.track.is_reftrack_created() or not self.track.has_boundaries() or not self.track.has_trackline():
             return
@@ -111,7 +120,7 @@ class GlobalPlanner(Node):
         for index, curr in enumerate(output["raceline"]):
             p = SpeedProfilePoint()
             p.point = Point(x=curr[0], y=curr[1])
-            p.ackerman_point = AckermannDrive(speed=output["speed"][index])
+            p.ackerman_point = AckermannDrive(speed=output["speed"][index], )
             points_list.append(p)
         
 

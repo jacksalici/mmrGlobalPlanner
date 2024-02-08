@@ -21,17 +21,6 @@ class Track():
     def has_trackline(self) -> bool:
         return self.lines.TRACK in self.__points
 
-    def __track_bound_crossprod(self, waypoint,c_one,c_two):
-        ac=waypoint-c_one
-        ab=c_two-c_one
-        cross_product = np.cross(ab,ac)
-        norm_ab = np.linalg.norm(ab)
-        norm_cross = np.linalg.norm(cross_product)
-        distance = norm_cross / norm_ab
-        if self.debug:
-            print(f"Min distance for {waypoint}: {distance}")
-        return distance 
-
     def __find_distances(self, center_line, boundary):
         n = len(center_line)
         return np.array([FAKE_DISTANCE for i in range(n)])
@@ -82,8 +71,11 @@ def main():
     if t.has_boundaries() and not t.is_reftrack_created():
         t.create_reftrack()
     
-    t.points_to_file("test.json")
+    points = t.get_reftrack()
 
+    plt.plot(points[:, 0], points[:, 1], 'o-k')
+    plt.show()
+  
 
 if __name__ == "__main__":
     main()
