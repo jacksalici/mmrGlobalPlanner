@@ -337,7 +337,7 @@ if __name__ == "__main__":
         print("First argument must be the location of the trajectory file.")
     else:
         points = np.loadtxt(sys.argv[1], delimiter=',')
-        points[:,0:2]=points[:,0:2]*5
-        points[:,2:4]=points[:,2:4]*2
+        points[:,0:2]=points[:,0:2]*(float(sys.argv[2]) if len(sys.argv) > 2 else 1)
+        points[:,2:4]=points[:,2:4]*(float(sys.argv[3]) if len(sys.argv) > 3 else 1)
         print(points.size)
         traj.optimize(points)
