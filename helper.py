@@ -2,8 +2,9 @@
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+import sys
 
-BAG = True
+BAG = False
 
 if BAG:
     points = json.load(open('bag.json'))
@@ -17,7 +18,8 @@ if BAG:
     plt.plot(y_boundary[:, 0], y_boundary[:, 1], 'o-y')
 
 else:
-    center_line = np.loadtxt('traj.txt', delimiter=',')
+    center_line = np.loadtxt(sys.argv[1], delimiter=',')
+    print(center_line)
     plt.plot(center_line[:, 0], center_line[:, 1], 'o-k')
 
 
