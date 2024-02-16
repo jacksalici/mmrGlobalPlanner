@@ -1,3 +1,0 @@
-[submodule "global_planner/global_racetrajectory_optimization"]
-	path = global_planner/global_racetrajectory_optimization
-	url = https://github.com/TUMFTM/global_racetrajectory_optimization

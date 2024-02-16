@@ -8,10 +8,9 @@ import matplotlib.pyplot as plt
 import configparser
 import pkg_resources
 import sys
+from helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, result_plots, interp_track
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_racetrajectory_optimization"))
 
-import helper_funcs_glob
 
 DEBUG = True
 
@@ -97,7 +96,7 @@ class Trajectory:
         # PREPARE REFTRACK 
 
         reftrack_interp, normvec_normalized_interp, a_interp, coeffs_x_interp, coeffs_y_interp = \
-            helper_funcs_glob.src.prep_track.prep_track(reftrack_imp=reftrack_imp,
+            prep_track.prep_track(reftrack_imp=reftrack_imp,
                                                         reg_smooth_opts=self.pars["reg_smooth_opts"],
                                                         stepsize_opts=self.pars["stepsize_opts"],
                                                         debug=DEBUG,
@@ -255,7 +254,7 @@ class Trajectory:
 
         # CHECK TRAJECTORY 
 
-        bound1, bound2 = helper_funcs_glob.src.check_traj.\
+        bound1, bound2 = check_traj.\
             check_traj(reftrack=reftrack_interp,
                     reftrack_normvec_normalized=normvec_normalized_interp,
                     length_veh=self.pars["veh_params"]["length"],
@@ -273,13 +272,13 @@ class Trajectory:
 
         # export race trajectory  to CSV
         if "traj_race_export" in self.file_paths.keys():
-            helper_funcs_glob.src.export_traj_race.export_traj_race(file_paths=self.file_paths,
+            export_traj_race.export_traj_race(file_paths=self.file_paths,
                                                                     traj_race=traj_race_cl)
 
 
         # if requested, export trajectory including map information (via normal vectors) to CSV
         if "traj_ltpl_export" in self.file_paths.keys():
-            helper_funcs_glob.src.export_traj_ltpl.export_traj_ltpl(file_paths=self.file_paths,
+            export_traj_ltpl.export_traj_ltpl(file_paths=self.file_paths,
                                                                     spline_lengths_opt=spline_lengths_opt,
                                                                     trajectory_opt=trajectory_opt,
                                                                     reftrack=reftrack_interp,
@@ -306,7 +305,7 @@ class Trajectory:
             bound2_imp = reftrack_imp[::n_skip, :2] - normvec_imp * np.expand_dims(reftrack_imp[::n_skip, 3], 1)
 
         # plot results
-        helper_funcs_glob.src.result_plots.result_plots(plot_opts=plot_opts,
+        result_plots.result_plots(plot_opts=plot_opts,
                                                         width_veh_opt=self.pars["optim_opts"]["width_opt"],
                                                         width_veh_real=self.pars["veh_params"]["width"],
                                                         refline=reftrack_interp[:, :2],
