@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from enum import Enum
 
-FAKE_DISTANCE = 1.4
 
 class Track():
     lines = Enum('Lines', ['TRACK', 'YELLOW', 'BLUE'])
@@ -22,6 +21,7 @@ class Track():
         return self.lines.TRACK in self.__points
 
     def __find_distances(self, center_line, boundary):
+        FAKE_DISTANCE = 1.4
         n = len(center_line)
         return np.array([FAKE_DISTANCE for i in range(n)])
     

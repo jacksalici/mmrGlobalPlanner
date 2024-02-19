@@ -20,25 +20,25 @@ class GlobalPlanner(Node):
         self.race_status_sub = self.create_subscription(
             RaceStatus,
             '/planning/race_status',
-            self.race_status_sub_callback,
+            self.__race_status_sub_callback,
             10)
         
         self.waypoints_sub = self.create_subscription(
             Marker,
             '/planning/waypoints_all',
-            self.waipoints_sub_callback,
+            self.__waipoints_sub_callback,
             10)
         
         self.boundaries_sub = self.create_subscription(
             Marker,
             '/planning/boundaries_all',
-            self.boundaries_sub_callback,
+            self.__boundaries_sub_callback,
             10)
         
         self.distances_sub = self.create_subscription(
             Marker,
             '/planning/distances_all',
-            self.distances_sub_callback,
+            self.__distances_sub_callback,
             10)
         
         self.speed_profile_pub = self.create_publisher(SpeedProfilePoints, '/planning/speedProfilePoints', 10)
@@ -60,14 +60,14 @@ class GlobalPlanner(Node):
     def add_point_line(self, points, line):
         self.track.add_line(points=[[point.x, point.y] for point in points], line=line)
 
-    def waipoints_sub_callback(self, msg: Marker):
+    def __waipoints_sub_callback(self, msg: Marker):
         self.add_point_line(points=msg.points, line=self.track.lines.TRACK)
         self.get_logger().info(f'Saved waypoints ({len(msg.points)})')
 
         self.elaborateTrackline()
         self.destroy_subscription(self.waypoints_sub)
 
-    def boundaries_sub_callback(self, msg: Marker):
+    def __boundaries_sub_callback(self, msg: Marker):
         line = None
 
         if msg.color.r == 0 and msg.color.g == 0 and msg.color.b == 1:
@@ -85,7 +85,7 @@ class GlobalPlanner(Node):
             self.elaborateTrackline()
             self.destroy_subscription(self.boundaries_sub)
 
-    def race_status_sub_callback(self, msg: RaceStatus):
+    def __race_status_sub_callback(self, msg: RaceStatus):
         # currentLap represent the number of laps completed. 
         if msg.current_lap != self.__current_lap:
             self.__current_lap = msg.current_lap
@@ -94,7 +94,7 @@ class GlobalPlanner(Node):
                 self.destroy_subscription(self.race_status_sub)
     
      
-    def distances_sub_callback(self, msg: Marker):
+    def __distances_sub_callback(self, msg: Marker):
         pass
     
     def elaborateTrackline(self):
