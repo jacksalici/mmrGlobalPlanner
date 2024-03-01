@@ -135,7 +135,64 @@ def result_plots(plot_opts: dict,
             cur_ind += ind_stepsize
 
         plt.show()
+    
+    if plot_opts["racetraj_vel_3d_simple"]:
+        scale_x = 1.0
+        scale_y = 1.0
+        scale_z = 1  # scale z axis such that it does not appear stretched
 
+        # create 3d plot
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+
+        # recast get_proj function to use scaling factors for the axes
+        ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([scale_x, scale_y, scale_z, 1.0]))
+
+        # plot raceline and boundaries
+        ax.plot(refline[:, 0], refline[:, 1], "k:", linewidth=0.7)
+        ax.plot(bound1_interp[:, 0], bound1_interp[:, 1], 0.0, "k--", linewidth=0.7)
+        ax.plot(bound2_interp[:, 0], bound2_interp[:, 1], 0.0, "k--", linewidth=0.7)
+        ax.plot(trajectory[:, 1], trajectory[:, 2], "r-", linewidth=1)
+
+        ax.grid()
+        ax.set_aspect("auto")
+        ax.set_xlabel("east in m")
+        ax.set_ylabel("north in m")
+
+        # plot velocity profile in 3D
+        ax.plot(trajectory[:, 1], trajectory[:, 2], trajectory[:, 5], color="b")
+        ax.set_zlabel("velocity in m/s")
+
+        # plot vertical lines visualizing acceleration and deceleration zones
+        ind_stepsize = int(np.round(plot_opts["racetraj_vel_3d_stepsize"] / trajectory[1, 0] - trajectory[0, 0]))
+        if ind_stepsize < 1:
+            ind_stepsize = 1
+
+        cur_ind = 0
+        no_points_traj_vdc = np.shape(trajectory)[0]
+
+        while cur_ind < no_points_traj_vdc - 1:
+            x_tmp = [trajectory[cur_ind, 1], trajectory[cur_ind, 1]]
+            y_tmp = [trajectory[cur_ind, 2], trajectory[cur_ind, 2]]
+            z_tmp = [0.0, trajectory[cur_ind, 5]]  # plot line with height depending on velocity
+
+            # get proper color for line depending on acceleration
+            if trajectory[cur_ind, 6] > 0.0:
+                col = "g"
+            elif trajectory[cur_ind, 6] < 0.0:
+                col = "r"
+            else:
+                col = "gray"
+
+            # plot line
+            #ax.plot(x_tmp, y_tmp, z_tmp, color=col)
+
+            # increment index
+            cur_ind += ind_stepsize
+
+        plt.show()
+
+    
     if plot_opts["spline_normals"]:
         plt.figure()
 

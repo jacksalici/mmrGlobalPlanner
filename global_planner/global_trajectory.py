@@ -31,14 +31,15 @@ lap_time_mat_opts = {"use_lap_time_mat": False,             # calculate a lap ti
                      "file": "lap_time_matrix.csv"}         # file name of the lap time matrix (stored in "outputs")
 # plot options
 plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (original and solution based) (mincurv only)
-             "raceline": DEBUG,                  # plot optimized path - DEBUG TRUE
+             "raceline": False,                  # plot optimized path - DEBUG TRUE
              "imported_bounds": False,          # plot imported bounds (analyze difference to interpolated bounds)
-             "raceline_curv": DEBUG,             # plot curvature profile of optimized path - DEBUG TRUE
-             "racetraj_vel": DEBUG,              # plot velocity profile - DEBUG TRUE
-             "racetraj_vel_3d": DEBUG,          # plot 3D velocity profile above raceline
+             "raceline_curv": False,             # plot curvature profile of optimized path - DEBUG TRUE
+             "racetraj_vel": False,              # plot velocity profile - DEBUG TRUE
+             "racetraj_vel_3d": False,          # plot 3D velocity profile above raceline
              "racetraj_vel_3d_stepsize": 1.0,   # [m] vertical lines stepsize in 3D velocity profile plot
              "spline_normals": False,           # plot spline normals to check for crossings
-             "mintime_plots": False}            # plot states, controls, friction coeffs etc. (mintime only)
+             "mintime_plots": False,        # plot states, controls, friction coeffs etc. (mintime only)
+             "racetraj_vel_3d_simple": True}    
 
 class Trajectory:
     def __init__(self) -> None:
