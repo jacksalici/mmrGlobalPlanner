@@ -23,10 +23,10 @@ class GlobalPlanner(Node):
             self.__race_status_sub_callback,
             10)
         
-        self.waypoints_sub = self.create_subscription(
+        self.centerline_sub = self.create_subscription(
             Marker,
-            '/planning/waypoints_all',
-            self.__waipoints_sub_callback,
+            '/planning/center_line_completed',
+            self.__centerline_sub_callback,
             10)
         
         self.boundaries_sub = self.create_subscription(
@@ -34,12 +34,8 @@ class GlobalPlanner(Node):
             '/planning/boundaries_all',
             self.__boundaries_sub_callback,
             10)
-        
-        self.distances_sub = self.create_subscription(
-            Marker,
-            '/planning/distances_all',
-            self.__distances_sub_callback,
-            10)
+    
+       
         
         self.speed_profile_pub = self.create_publisher(SpeedProfilePoints, '/planning/speedProfilePoints', 10)
         
@@ -58,9 +54,9 @@ class GlobalPlanner(Node):
         self.get_logger().info(a)
         
     def add_point_line(self, points, line):
-        self.track.add_line(points=[[point.x, point.y] for point in points], line=line)
+        self.track.add_line(points=[[point.x, point.y, point.z, point.z] for point in points], line=line)
 
-    def __waipoints_sub_callback(self, msg: Marker):
+    def __centerline_sub_callback(self, msg: Marker):
         self.add_point_line(points=msg.points, line=self.track.lines.TRACK)
         self.get_logger().info(f'Saved waypoints ({len(msg.points)})')
 
@@ -93,14 +89,10 @@ class GlobalPlanner(Node):
             if self.__current_lap >2:
                 self.destroy_subscription(self.race_status_sub)
     
-     
-    def __distances_sub_callback(self, msg: Marker):
-        pass
+    
     
     def elaborateTrackline(self):
-        if self.track.is_reftrack_created() or not self.track.has_boundaries() or not self.track.has_trackline():
-            return
-        
+   
         self.get_logger().info('ELABORATING TRACKLINE')
         self.track.create_reftrack()
         str = self.trajectory.optimize(self.track.get_reftrack())
