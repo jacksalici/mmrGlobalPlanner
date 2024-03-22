@@ -163,32 +163,7 @@ def result_plots(plot_opts: dict,
         ax.plot(trajectory[:, 1], trajectory[:, 2], trajectory[:, 5], color="b")
         ax.set_zlabel("velocity in m/s")
 
-        # plot vertical lines visualizing acceleration and deceleration zones
-        ind_stepsize = int(np.round(plot_opts["racetraj_vel_3d_stepsize"] / trajectory[1, 0] - trajectory[0, 0]))
-        if ind_stepsize < 1:
-            ind_stepsize = 1
-
-        cur_ind = 0
-        no_points_traj_vdc = np.shape(trajectory)[0]
-
-        while cur_ind < no_points_traj_vdc - 1:
-            x_tmp = [trajectory[cur_ind, 1], trajectory[cur_ind, 1]]
-            y_tmp = [trajectory[cur_ind, 2], trajectory[cur_ind, 2]]
-            z_tmp = [0.0, trajectory[cur_ind, 5]]  # plot line with height depending on velocity
-
-            # get proper color for line depending on acceleration
-            if trajectory[cur_ind, 6] > 0.0:
-                col = "g"
-            elif trajectory[cur_ind, 6] < 0.0:
-                col = "r"
-            else:
-                col = "gray"
-
-            # plot line
-            #ax.plot(x_tmp, y_tmp, z_tmp, color=col)
-
-            # increment index
-            cur_ind += ind_stepsize
+        
 
         plt.show()
 
