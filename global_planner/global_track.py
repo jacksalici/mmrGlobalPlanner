@@ -42,7 +42,6 @@ class Track():
         d = {}
         for k, i in self.__points.items():
             d[str(k).split('.')[1]] = i.tolist()
-        print(d)
         json.dump(d, open(file, 'w'), 
                 indent=4) ### this saves the array in .json format
 
