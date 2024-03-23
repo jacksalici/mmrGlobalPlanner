@@ -342,9 +342,12 @@ if __name__ == "__main__":
     
     parser.add_argument('--save_path', type=pathlib.Path, help='Output saving folder')
     parser.add_argument('--times', type=int, help='Times to repeat the optimizations (for reliability and stability reasons)', default= 1)
+    
+    parser.add_argument('--plot', help='Plot the result.', action="store_true")
+    
 
     args = parser.parse_args()
-    
+    files_path = []
     traj = Trajectory()
     for i in range(args.times):
         points = np.loadtxt(args.reftrack_path, delimiter=',')
@@ -357,4 +360,38 @@ if __name__ == "__main__":
             opt = traj.get_trajectory_opt()
             stack = np.column_stack((opt["raceline"], opt["speed"]))
             my_time = time.localtime()
-            np.savetxt(pathlib.Path.joinpath(args.save_path, time.strftime("GP_%Y%m%d_%H%M%S.csv", my_time)), stack, delimiter=",")
+            files_path.append(pathlib.Path.joinpath(args.save_path, time.strftime("GP_%Y%m%d_%H%M%S.csv", my_time)))
+            np.savetxt(files_path[-1], stack, delimiter=",")
+         
+       
+    def plot_double_graph(files):
+        import csv
+
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+
+        # Plot all third columns in 2D graph
+        for file in files:
+            with open(file, 'r') as csvfile:
+                reader = csv.reader(csvfile)
+                data = list(reader)
+                third_column = [float(row[2]) for row in data]  # Assuming third column index is 2
+                ax1.plot(third_column, label=os.path.basename(file).split('.')[0])
+        ax1.set_title('Speed profile')
+        ax1.legend()
+
+        # Plot all first and second columns
+        for file in files:
+            with open(file, 'r') as csvfile:
+                reader = csv.reader(csvfile)
+                data = list(reader)
+                first_column = [float(row[0]) for row in data]  # Assuming first column index is 0
+                second_column = [float(row[1]) for row in data]  # Assuming second column index is 1
+                ax2.plot(first_column, second_column, label=os.path.basename(file).split('.')[0])
+        ax2.set_title('New Trajectory')
+        ax2.legend()
+
+        plt.tight_layout()
+        plt.show()
+        
+    if args.plot and args.save_path:
+        plot_double_graph(files=files_path)
