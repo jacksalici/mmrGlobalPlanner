@@ -331,14 +331,30 @@ class Trajectory:
         
 #for debug
 if __name__ == "__main__":
-    DEBUG = True       
-    traj = Trajectory()
+    import argparse, pathlib, time
+    
+    parser = argparse.ArgumentParser(description='Global Planner tester tool')
+    
+    parser.add_argument('reftrack_path', type=pathlib.Path,
+                    help='The path of the CSV with the (n,4)-sized array.')
+    parser.add_argument('--x_mul', type=float, help='Multiplicator to rescale the track width.', default= 1.0)
+    parser.add_argument('--y_mul', type=float, help='Multiplicator to rescale the track dimensions.', default= 1.0 )
+    
+    parser.add_argument('--save_path', type=pathlib.Path, help='Output saving folder')
+    parser.add_argument('--times', type=int, help='Times to repeat the optimizations (for reliability and stability reasons)', default= 1)
 
-    if not sys.argv[1]:
-        print("First argument must be the location of the trajectory file.")
-    else:
-        points = np.loadtxt(sys.argv[1], delimiter=',')
-        points[:,0:2]=points[:,0:2]*(float(sys.argv[2]) if len(sys.argv) > 2 else 1)
-        points[:,2:4]=points[:,2:4]*(float(sys.argv[3]) if len(sys.argv) > 3 else 1)
-        print(points.size)
+    args = parser.parse_args()
+    
+    traj = Trajectory()
+    for i in range(args.times):
+        points = np.loadtxt(args.reftrack_path, delimiter=',')
+        points[:,0:2]=points[:,0:2]*args.y_mul
+        points[:,2:4]=points[:,2:4]*args.y_mul
+        print(f"Optimizing an array of point {points.shape}")
         traj.optimize(points)
+        
+        if args.save_path:
+            opt = traj.get_trajectory_opt()
+            stack = np.column_stack((opt["raceline"], opt["speed"]))
+            my_time = time.localtime()
+            np.savetxt(pathlib.Path.joinpath(args.save_path, time.strftime("GP_%Y%m%d_%H%M%S.csv", my_time)), stack, delimiter=",")
