@@ -23,8 +23,7 @@ The output csv contains the global race trajectory. The array is of size [no_poi
 * `psi_rad`: float32, rad. Heading of raceline in current point from -pi to +pi rad. Zero is north (along y-axis).
 * `kappa_radpm`: float32, rad/meter. Curvature of raceline in current point.
 * `vx_mps`: float32, meter/second. Target velocity in current point.
-* `ax_mps2`: float32, meter/second². Target acceleration in current point. We assume this acceleration to be constant
-  from current point until next point.
+* `ax_mps2`: float32, meter/second². Target acceleration in current point. We assume this acceleration to be constant from current point until next point.
 
 
 # References

@@ -111,14 +111,15 @@ class GlobalPlanner(Node):
         {
             "raceline": raceline_interp,
             "speed": vx_profile_opt,
-            "acceleration": ax_profile_opt
+            "acceleration": ax_profile_opt,
+            "heading": psi_vel_opt
         }
         """
         points_list = []
         for index, curr in enumerate(output["raceline"]):
             p = SpeedProfilePoint()
             p.point = Point(x=curr[0], y=curr[1])
-            p.ackerman_point = AckermannDrive(speed=output["speed"][index], )
+            p.ackerman_point = AckermannDrive(speed=output["speed"][index], acceleration = output["acceleration"][index],steering_angle=output["heading"][index] )
             points_list.append(p)
 
         self.speed_profile_pub.publish(SpeedProfilePoints(points=points_list))

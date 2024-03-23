@@ -319,7 +319,8 @@ class Trajectory:
         self._trajectory_opt = {
             "raceline": raceline_interp,
             "speed": vx_profile_opt,
-            "acceleration": ax_profile_opt
+            "acceleration": ax_profile_opt,
+            "heading": psi_vel_opt
         }
         return "Optimization finished"
 
