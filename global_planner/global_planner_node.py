@@ -11,7 +11,9 @@ from .global_track import Track
 from .global_trajectory import Trajectory
 
 config = {
-    "savePointsPath": False
+    "savePointsPath": False,
+    "fakeDistance": 1.5,
+    "legacylocalTopic": True
 }
 
 class GlobalPlanner(Node):    
@@ -28,7 +30,7 @@ class GlobalPlanner(Node):
         
         self.centerline_sub = self.create_subscription(
             Marker,
-            '/planning/center_line_completed',
+            '/planning/center_line_completed' if not config['legacylocalTopic'] else '/planning/waypoints_all',
             self.__centerline_sub_callback,
             10)
         
@@ -38,8 +40,6 @@ class GlobalPlanner(Node):
             self.__boundaries_sub_callback,
             10)
     
-       
-        
         self.speed_profile_pub = self.create_publisher(SpeedProfilePoints, '/planning/speedProfilePoints', 10)
         
         self.track = Track(debug=True)
@@ -57,11 +57,16 @@ class GlobalPlanner(Node):
         self.get_logger().info(a)
                 
     def __centerline_sub_callback(self, msg: Marker):
-        self.track.set_reftrack(centerline=[[point.x, point.y, point.z, point.z] for point in msg.points])
+        self.track.set_reftrack(centerline=[
+            [point.x,
+             point.y,
+             config['fakeDistance'] if config["fakeDistance"] else point.z,
+             config['fakeDistance'] if config["fakeDistance"] else point.z]
+            for point in msg.points])
         self.get_logger().info(f'Saved waypoints ({len(msg.points)})')
 
         self.elaborateTrackline()
-        self.destroy_subscription(self.waypoints_sub)
+        self.destroy_subscription(self.centerline_sub)
 
     def __boundaries_sub_callback(self, msg: Marker):
         line = None

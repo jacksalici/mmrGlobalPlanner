@@ -20,10 +20,11 @@ class Track():
     def get_reftrack(self) -> np.ndarray:
         return self.__reftrack
     
-    def set_reftrack(self, centerline: np.ndarray):
-        if (centerline.shape[1]!=4):
+    def set_reftrack(self, centerline):
+        reftrack = np.array(centerline)
+        if (reftrack.shape[1]!=4):
             print("Warning, centerline should be a vector of shape (N,4)")
-        self.__reftrack = centerline
+        self.__reftrack = reftrack
 
     def is_reftrack_created(self):
         return self.__reftrack != None
