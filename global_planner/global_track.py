@@ -53,18 +53,16 @@ def main():
 
     
     t = Track(debug=True)
-
-
-    t.add_line(points=l[9], line=t.lines.TRACK)
+    
+    t.set_reftrack(l[9])
     t.add_line(points=l[10], line=t.lines.BLUE)
     t.add_line(points=l[8], line=t.lines.YELLOW)
 
-    if t.has_boundaries() and not t.is_reftrack_created():
-        t.create_reftrack()
     
     points = t.get_reftrack()
-
     plt.plot(points[:, 0], points[:, 1], 'o-k')
+    plt.plot(l[10][:, 0], l[10][:, 1], '^b')
+    plt.plot(l[8][:, 0], l[8][:, 1], '^y')
     plt.show()
   
 
