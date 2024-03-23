@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import configparser
 import pkg_resources
 import sys
-from .helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, result_plots, interp_track
+from global_planner.helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, result_plots, interp_track
 
 
 

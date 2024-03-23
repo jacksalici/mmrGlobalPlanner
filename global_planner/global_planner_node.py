@@ -9,7 +9,10 @@ from geometry_msgs.msg import Point
 
 from .global_track import Track
 from .global_trajectory import Trajectory
- 
+
+config = {
+    "savePointsPath": False
+}
 
 class GlobalPlanner(Node):    
     __current_lap = 0
@@ -52,12 +55,9 @@ class GlobalPlanner(Node):
 """        
         
         self.get_logger().info(a)
-        
-    def add_point_line(self, points, line):
-        self.track.add_line(points=[[point.x, point.y, point.z, point.z] for point in points], line=line)
-
+                
     def __centerline_sub_callback(self, msg: Marker):
-        self.add_point_line(points=msg.points, line=self.track.lines.TRACK)
+        self.track.set_reftrack(centerline=[[point.x, point.y, point.z, point.z] for point in msg.points])
         self.get_logger().info(f'Saved waypoints ({len(msg.points)})')
 
         self.elaborateTrackline()
@@ -73,12 +73,12 @@ class GlobalPlanner(Node):
         else:
             self.get_logger().warning(f'Read unknown boundaries ({str(msg.color)}).')
             return
+        
+        self.track.add_line(points=[[point.x, point.y, point.z, point.z] for point in msg.points], line=line)
 
-        self.add_point_line(line=line, points=msg.points)
         self.get_logger().info(f'Saved boundaries [{line}] ({len(msg.points)} points).')
 
         if self.track.has_boundaries():
-            self.elaborateTrackline()
             self.destroy_subscription(self.boundaries_sub)
 
     def __race_status_sub_callback(self, msg: RaceStatus):
@@ -94,11 +94,12 @@ class GlobalPlanner(Node):
     def elaborateTrackline(self):
    
         self.get_logger().info('ELABORATING TRACKLINE')
-        self.track.create_reftrack()
         str = self.trajectory.optimize(self.track.get_reftrack())
-        self.track.points_to_file("bag.json")
+        
+        if config['savePointsPath']:
+            self.track.points_to_file(config['savePointsPath'])
+        
         self.get_logger().info(f'{str}')
-
         
         output = self.trajectory.get_trajectory_opt()
         """
@@ -114,7 +115,6 @@ class GlobalPlanner(Node):
             p.point = Point(x=curr[0], y=curr[1])
             p.ackerman_point = AckermannDrive(speed=output["speed"][index], )
             points_list.append(p)
-        
 
         self.speed_profile_pub.publish(SpeedProfilePoints(points=points_list))
         self.get_logger().info('Published.')

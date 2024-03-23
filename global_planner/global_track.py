@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class Track():
-    lines = Enum('Lines', ['TRACK', 'YELLOW', 'BLUE'])
+    lines = Enum('Lines', ['YELLOW', 'BLUE'])
     __points = {}
     __reftrack = None
 
@@ -16,23 +16,14 @@ class Track():
 
     def has_boundaries(self) -> bool:
         return self.lines.YELLOW in self.__points and self.lines.BLUE in self.__points
-    
-    def has_trackline(self) -> bool:
-        return self.lines.TRACK in self.__points
-
-    def __find_distances(self, center_line, boundary):
-        FAKE_DISTANCE = 1.4
-        n = len(center_line)
-        return np.array([FAKE_DISTANCE for i in range(n)])
-    
-    def create_reftrack(self):
-        w_l = self.__find_distances(self.__points[self.lines.TRACK], self.__points[self.lines.BLUE]).reshape(-1,1)
-        w_r = self.__find_distances(self.__points[self.lines.TRACK], self.__points[self.lines.YELLOW  ]).reshape(-1,1)
-
-        self.__reftrack = np.concatenate((self.__points[self.lines.TRACK], w_r, w_l), axis=-1)
 
     def get_reftrack(self) -> np.ndarray:
         return self.__reftrack
+    
+    def set_reftrack(self, centerline: np.ndarray):
+        if (centerline.shape[1]!=4):
+            print("Warning, centerline should be a vector of shape (N,4)")
+        self.__reftrack = centerline
 
     def is_reftrack_created(self):
         return self.__reftrack != None
