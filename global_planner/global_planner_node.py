@@ -13,7 +13,7 @@ from .global_trajectory import Trajectory
 config = {
     "savePointsPath": False,
     "fakeDistance": 1.5,
-    "legacylocalTopic": True
+    "legacylocalTopic": False
 }
 
 class GlobalPlanner(Node):    
@@ -60,8 +60,8 @@ class GlobalPlanner(Node):
         self.track.set_reftrack(centerline=[
             [point.x,
              point.y,
-             config['fakeDistance'] if config["fakeDistance"] else point.z,
-             config['fakeDistance'] if config["fakeDistance"] else point.z]
+            point.z if point.z != 0 else config['fakeDistance'],
+            point.z if point.z != 0 else config['fakeDistance']]
             for point in msg.points])
         self.get_logger().info(f'Saved waypoints ({len(msg.points)})')
 
