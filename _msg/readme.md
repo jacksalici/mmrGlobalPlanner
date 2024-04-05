@@ -12,7 +12,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES std_msgs geometry_msgs ackermann_msgs
 ```
 
-Build the package with: 
+Build the package with: (from the main folder) 
 ```sh
 colcon build --packages-select mmr_base --symlink-install
+source ./install/setup.bash
 ```
