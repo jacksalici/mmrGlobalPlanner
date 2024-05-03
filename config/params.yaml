@@ -1,0 +1,38 @@
+GENERAL_OPTIONS:
+  # set name of ggv diagram and ax_max_machines files to use
+  ggv_file: "ggv.csv"
+  ax_max_machines_file: "ax_max_machines.csv"
+  
+  # stepsize options
+  stepsize_opts:
+    stepsize_prep: 1.0  # [m] used for linear interpolation before spline approximation
+    stepsize_reg: 3.0    # [m] used for spline interpolation after spline approximation (stepsize during opt.)
+    stepsize_interp_after_opt: 1.0  # [m] used for spline interpolation after optimization
+
+  # spline regression smooth options
+  reg_smooth_opts:
+    k_reg: 3   # [-] order of B-Splines -> standard: 3
+    s_reg: 1   # [-] smoothing factor, range [1.0, 100.0]
+
+  # general vehicle parameters required in several functions
+  veh_params:
+    v_max: 72.0       # [m/s] maximal vehicle speed
+    length: 1.8       # [m] vehicle length
+    width: 0.7        # [m] vehicle width
+    mass: 200.0       # [kg] vehicle mass
+    dragcoeff: 0.75   # [kg*m2/m3] drag coefficient calculated by 0.5 * rho_air * c_w * A_front
+    curvlim: 99       # [rad/m] curvature limit of the vehicle
+    g: 9.81           # [N/kg] gravity acceleration
+
+  # velocity profile calculation options
+  vel_calc_opts:
+    dyn_model_exp: 1.0   # [-] exponent used in the vehicle dynamics model (range [1.0, 2.0])
+    vel_profile_conv_filt_window: null  # [-] moving average filter window size for velocity profile (set null if not used)
+
+OPTIMIZATION_OPTIONS:
+  # optimization problem options (minimum curvature optimization)
+  optim_opts_mincurv:
+    width_opt: 1.2          # [m] vehicle width for optimization including safety distance
+    iqp_iters_min: 3         # [-] minimum number of iterations for the IQP
+    iqp_curverror_allowed: 1    # Allows the curvature error for IQP
+
