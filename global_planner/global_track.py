@@ -5,17 +5,17 @@ from enum import Enum
 
 class Track():
     lines = Enum('Lines', ['YELLOW', 'BLUE'])
-    __points = {}
+    __boundaries = {}
     __reftrack = None
 
     def __init__(self, debug = False) -> None:
         self.debug = debug
 
-    def add_line(self, line: lines, points: list):
-        self.__points[line] = np.array(points, dtype=np.float)
+    def add_boundary(self, line: lines, points: list):
+        self.__boundaries[line] = np.array(points, dtype=np.float)
 
     def has_boundaries(self) -> bool:
-        return self.lines.YELLOW in self.__points and self.lines.BLUE in self.__points
+        return self.lines.YELLOW in self.__boundaries and self.lines.BLUE in self.__boundaries
 
     def get_reftrack(self) -> np.ndarray:
         return self.__reftrack
@@ -32,7 +32,7 @@ class Track():
     def points_to_file(self, file):
         import json 
         d = {}
-        for k, i in self.__points.items():
+        for k, i in self.__boundaries.items():
             d[str(k).split('.')[1]] = i.tolist()
         json.dump(d, open(file, 'w'), 
                 indent=4) ### this saves the array in .json format

@@ -12,37 +12,16 @@ from global_planner.helper import prep_track, check_traj, export_traj_race, expo
 
 
 
-DEBUG = True
-
-
-# set import options 
-imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
-            "set_new_start": False,                 # set new starting point (changes order, not coordinates)
-            "new_start": np.array([0.0, -47.0]),    # [x_m, y_m]
-            "min_track_width": None,                # [m] minimum enforced track width (set None to deactivate)
-            "num_laps": 1}                          # number of laps to be driven (significant with powertrain-option),
-                                                    # only relevant in mintime-optimization
-# lap time calculation table 
-lap_time_mat_opts = {"use_lap_time_mat": False,             # calculate a lap time matrix (diff. top speeds and scales)
-                     "gg_scale_range": [0.3, 1.0],          # range of gg scales to be covered
-                     "gg_scale_stepsize": 0.05,             # step size to be applied
-                     "top_speed_range": [100.0, 150.0],     # range of top speeds to be simulated [in km/h]
-                     "top_speed_stepsize": 5.0,             # step size to be applied
-                     "file": "lap_time_matrix.csv"}         # file name of the lap time matrix (stored in "outputs")
-# plot options
-plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (original and solution based) (mincurv only)
-             "raceline": False,                  # plot optimized path - DEBUG TRUE
-             "imported_bounds": False,          # plot imported bounds (analyze difference to interpolated bounds)
-             "raceline_curv": False,             # plot curvature profile of optimized path - DEBUG TRUE
-             "racetraj_vel": False,              # plot velocity profile - DEBUG TRUE
-             "racetraj_vel_3d": False,          # plot 3D velocity profile above raceline
-             "racetraj_vel_3d_stepsize": 1.0,   # [m] vertical lines stepsize in 3D velocity profile plot
-             "spline_normals": False,           # plot spline normals to check for crossings
-             "mintime_plots": False,        # plot states, controls, friction coeffs etc. (mintime only)
-             "racetraj_vel_3d_simple": True}    
-
 class Trajectory:
-    def __init__(self) -> None:
+    def __init__(self, params) -> None:
+        
+        self.pars = params['car_config']
+        self.pars['plot_opts'] = params['plot_opts']
+        self.pars['lap_time_mat_opts'] = params['lap_time_mat_opts']
+        self.pars['imp_opts'] = params['imp_opts']
+        self.pars['misc'] = params['misc']
+        self.pars["optim_opts"] = params['optimization_opt']['optim_opts_mincurv']
+
         self.file_paths = {"veh_params_file": "racecar.ini"}
 
             
@@ -56,28 +35,15 @@ class Trajectory:
         # assemble export paths
         self.file_paths["traj_race_export"] = os.path.join(self.file_paths["module"], "outputs", "traj_race_cl.csv")
         # file_paths["traj_ltpl_export"] = os.path.join(file_paths["module"], "outputs", "traj_ltpl_cl.csv")
-        self.file_paths["lap_time_mat_export"] = os.path.join(self.file_paths["module"], "outputs", lap_time_mat_opts["file"])
+        self.file_paths["lap_time_mat_export"] = os.path.join(self.file_paths["module"], "outputs", self.pars['lap_time_mat_opts']["file"])
 
   
         # IMPORT VEHICLE DEPENDENT PARAMETERS 
 
-        # load vehicle parameter file into a "pars" dict
-        parser = configparser.ConfigParser()
-        self.pars = {}
-
-        if not parser.read(os.path.join(self.file_paths["module"], "input", self.file_paths["veh_params_file"])):
-            raise ValueError('Specified config file does not exist or is empty!')
-
-        self.pars["ggv_file"] = json.loads(parser.get('GENERAL_OPTIONS', 'ggv_file'))
-        self.pars["ax_max_machines_file"] = json.loads(parser.get('GENERAL_OPTIONS', 'ax_max_machines_file'))
-        self.pars["stepsize_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'stepsize_opts'))
-        self.pars["reg_smooth_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'reg_smooth_opts'))
-        self.pars["veh_params"] = json.loads(parser.get('GENERAL_OPTIONS', 'veh_params'))
-        self.pars["vel_calc_opts"] = json.loads(parser.get('GENERAL_OPTIONS', 'vel_calc_opts'))
-        self.pars["optim_opts"] = json.loads(parser.get('OPTIMIZATION_OPTIONS', 'optim_opts_mincurv'))
-        
         self.file_paths["ggv_file"] = os.path.join(self.file_paths["module"], "input", self.pars["ggv_file"])
         self.file_paths["ax_max_machines_file"] = os.path.join(self.file_paths["module"], "input", self.pars["ax_max_machines_file"])
+        
+        print(self.pars)
         
     def optimize(self, rtrack = np.array([])):
         # IMPORT TRACK AND VEHICLE DYNAMICS INFORMATION 
@@ -100,8 +66,8 @@ class Trajectory:
             prep_track.prep_track(reftrack_imp=reftrack_imp,
                                                         reg_smooth_opts=self.pars["reg_smooth_opts"],
                                                         stepsize_opts=self.pars["stepsize_opts"],
-                                                        debug=DEBUG,
-                                                        min_width=imp_opts["min_track_width"])
+                                                        debug=self.pars['misc']['debug'],
+                                                        min_width=self.pars['imp_opts']["min_track_width"] if self.pars['imp_opts']["min_track_width"]!=-1 else None)
 
         # CALL OPTIMIZATION 
         pars_tmp = self.pars
@@ -111,8 +77,8 @@ class Trajectory:
                         A=a_interp,
                         kappa_bound=self.pars["veh_params"]["curvlim"],
                         w_veh=self.pars["optim_opts"]["width_opt"],
-                        print_debug=DEBUG,
-                        plot_debug=plot_opts["mincurv_curv_lin"],
+                        print_debug=self.pars['misc']['debug'],
+                        plot_debug=self.pars['plot_opts']["mincurv_curv_lin"],
                         stepsize_interp=self.pars["stepsize_opts"]["stepsize_reg"],
                         iters_min=self.pars["optim_opts"]["iqp_iters_min"],
                         curv_error_allowed=self.pars["optim_opts"]["iqp_curverror_allowed"])
@@ -146,7 +112,7 @@ class Trajectory:
                             kappa=kappa_opt,
                             el_lengths=el_lengths_opt_interp,
                             closed=True,
-                            filt_window=self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"],
+                            filt_window=self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"] if self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"] != -1 else None,
                             dyn_model_exp=self.pars["vel_calc_opts"]["dyn_model_exp"],
                             drag_coeff=self.pars["veh_params"]["dragcoeff"],
                             m_veh=self.pars["veh_params"]["mass"])
@@ -163,7 +129,7 @@ class Trajectory:
                                                         el_lengths=el_lengths_opt_interp)
         print("INFO: Estimated laptime: %.2fs" % t_profile_cl[-1])
 
-        if plot_opts["racetraj_vel"]:
+        if self.pars['plot_opts']["racetraj_vel"]:
             s_points = np.cumsum(el_lengths_opt_interp[:-1])
             s_points = np.insert(s_points, 0, 0.0)
 
@@ -179,16 +145,16 @@ class Trajectory:
 
         # CALCULATE LAP TIMES (AT DIFFERENT SCALES AND TOP SPEEDS) 
 
-        if lap_time_mat_opts["use_lap_time_mat"]:
+        if self.pars['lap_time_mat_opts']["use_lap_time_mat"]:
             # simulate lap times
-            ggv_scales = np.linspace(lap_time_mat_opts['gg_scale_range'][0],
-                                    lap_time_mat_opts['gg_scale_range'][1],
-                                    int((lap_time_mat_opts['gg_scale_range'][1] - lap_time_mat_opts['gg_scale_range'][0])
-                                        / lap_time_mat_opts['gg_scale_stepsize']) + 1)
-            top_speeds = np.linspace(lap_time_mat_opts['top_speed_range'][0] / 3.6,
-                                    lap_time_mat_opts['top_speed_range'][1] / 3.6,
-                                    int((lap_time_mat_opts['top_speed_range'][1] - lap_time_mat_opts['top_speed_range'][0])
-                                        / lap_time_mat_opts['top_speed_stepsize']) + 1)
+            ggv_scales = np.linspace(self.pars['lap_time_mat_opts']['gg_scale_range'][0],
+                                    self.pars['lap_time_mat_opts']['gg_scale_range'][1],
+                                    int((self.pars['lap_time_mat_opts']['gg_scale_range'][1] - self.pars['lap_time_mat_opts']['gg_scale_range'][0])
+                                        / self.pars['lap_time_mat_opts']['gg_scale_stepsize']) + 1)
+            top_speeds = np.linspace(self.pars['lap_time_mat_opts']['top_speed_range'][0] / 3.6,
+                                    self.pars['lap_time_mat_opts']['top_speed_range'][1] / 3.6,
+                                    int((self.pars['lap_time_mat_opts']['top_speed_range'][1] - self.pars['lap_time_mat_opts']['top_speed_range'][0])
+                                        / self.pars['lap_time_mat_opts']['top_speed_stepsize']) + 1)
 
             # setup results matrix
             lap_time_matrix = np.zeros((top_speeds.shape[0] + 1, ggv_scales.shape[0] + 1))
@@ -213,7 +179,7 @@ class Trajectory:
                                         kappa=kappa_opt,
                                         el_lengths=el_lengths_opt_interp,
                                         dyn_model_exp=self.pars["vel_calc_opts"]["dyn_model_exp"],
-                                        filt_window=self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"],
+                                        filt_window=self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"] if self.pars["vel_calc_opts"]["vel_profile_conv_filt_window"] != -1 else None,
                                         closed=True,
                                         drag_coeff=self.pars["veh_params"]["dragcoeff"],
                                         m_veh=self.pars["veh_params"]["mass"])
@@ -260,7 +226,7 @@ class Trajectory:
                     reftrack_normvec_normalized=normvec_normalized_interp,
                     length_veh=self.pars["veh_params"]["length"],
                     width_veh=self.pars["veh_params"]["width"],
-                    debug=DEBUG,
+                    debug=self.pars['misc']['debug'],
                     trajectory=trajectory_opt,
                     ggv=ggv,
                     ax_max_machines=ax_max_machines,
@@ -295,7 +261,7 @@ class Trajectory:
         bound1_imp = None
         bound2_imp = None
 
-        if plot_opts["imported_bounds"]:
+        if self.pars['plot_opts']["imported_bounds"]:
             # try to extract four times as many points as in the interpolated version (in order to hold more details)
             n_skip = max(int(reftrack_imp.shape[0] / (bound1.shape[0] * 4)), 1)
 
@@ -306,7 +272,7 @@ class Trajectory:
             bound2_imp = reftrack_imp[::n_skip, :2] - normvec_imp * np.expand_dims(reftrack_imp[::n_skip, 3], 1)
 
         # plot results
-        result_plots.result_plots(plot_opts=plot_opts,
+        result_plots.result_plots(plot_opts=self.pars['plot_opts'],
                                                         width_veh_opt=self.pars["optim_opts"]["width_opt"],
                                                         width_veh_real=self.pars["veh_params"]["width"],
                                                         refline=reftrack_interp[:, :2],
@@ -331,7 +297,7 @@ class Trajectory:
         
 #for debug
 if __name__ == "__main__":
-    import argparse, pathlib, time
+    import argparse, pathlib, time, yaml
     
     parser = argparse.ArgumentParser(description='Global Planner tester tool')
     
@@ -348,7 +314,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     files_path = []
-    traj = Trajectory()
+    
+    yaml_file_path = "../config/params.yaml"
+
+    # Load parameters from the YAML file
+    params = yaml.safe_load(open(yaml_file_path, 'r'))
+    
+    traj = Trajectory(params['/global_planner']['ros__parameters'])
     for i in range(args.times):
         points = np.loadtxt(args.reftrack_path, delimiter=',')
         points[:,0:2]=points[:,0:2]*args.y_mul
