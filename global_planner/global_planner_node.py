@@ -189,6 +189,10 @@ class GlobalPlanner(Node):
             "heading": psi_vel_opt
         }
         """
+        if(self.params_dict["misc"]["debug"]):
+            self.get_logger().info(f'{output}')
+        
+        
         points_list = []
         for index, curr in enumerate(output["raceline"]):
             p = SpeedProfilePoint()
