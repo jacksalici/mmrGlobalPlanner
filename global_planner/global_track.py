@@ -4,18 +4,11 @@ from enum import Enum
 
 
 class Track():
-    lines = Enum('Lines', ['YELLOW', 'BLUE'])
-    __boundaries = {}
+
     __reftrack = None
 
     def __init__(self, debug = False) -> None:
         self.debug = debug
-
-    def add_boundary(self, line: lines, points: list):
-        self.__boundaries[line] = np.array(points, dtype=np.float)
-
-    def has_boundaries(self) -> bool:
-        return self.lines.YELLOW in self.__boundaries and self.lines.BLUE in self.__boundaries
 
     def get_reftrack(self) -> np.ndarray:
         return self.__reftrack
@@ -28,14 +21,7 @@ class Track():
 
     def is_reftrack_created(self):
         return self.__reftrack != None
-    
-    def points_to_file(self, file):
-        import json 
-        d = {}
-        for k, i in self.__boundaries.items():
-            d[str(k).split('.')[1]] = i.tolist()
-        json.dump(d, open(file, 'w'), 
-                indent=4) ### this saves the array in .json format
+
 
 # just for testing
 
@@ -47,16 +33,16 @@ def main():
     l = {}
 
     for radius in [8,10,9]:
-            x = radius * np.cos(theta)
-            y = radius * np.sin(theta)
-            l[radius] = np.squeeze(np.dstack((x,y)), axis=0)
+        x = radius * np.cos(theta)
+        y = radius * np.sin(theta)
+        l[radius] = np.squeeze(np.dstack((x,y)), axis=0)
 
     
     t = Track(debug=True)
     
-    t.set_reftrack(l[9])
-    t.add_line(points=l[10], line=t.lines.BLUE)
-    t.add_line(points=l[8], line=t.lines.YELLOW)
+    distances = [[2] for i in range (len(l[9]))]
+    
+    t.set_reftrack(np.hstack((l[9], distances, distances)))
 
     
     points = t.get_reftrack()

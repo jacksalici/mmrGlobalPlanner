@@ -19,7 +19,6 @@ class GlobalPlanner(Node):
         self.params_dict = self.get_params()
         
 
-
         self.race_status_sub = self.create_subscription(
             RaceStatus,
             '/planning/race_status',
@@ -31,12 +30,7 @@ class GlobalPlanner(Node):
             '/planning/center_line_completed' if not self.params_dict['misc']['legacylocalTopic'] else '/planning/waypoints_all',
             self.__centerline_sub_callback,
             10)
-        
-        self.boundaries_sub = self.create_subscription(
-            Marker,
-            '/planning/boundaries_all',
-            self.__boundaries_sub_callback,
-            10)
+
     
         self.speed_profile_pub = self.create_publisher(SpeedProfilePoints, '/planning/speedProfilePoints', 10)
 
@@ -44,13 +38,11 @@ class GlobalPlanner(Node):
         self.trajectory = Trajectory(params = self.params_dict)
         
         a = """Global planner initializated.
-
-   ___ _     _         _   ___ _                        
+   ___ _     _         _   ___ _  
   / __| |___| |__ __ _| | | _ | |__ _ _ _  _ _  ___ _ _ 
  | (_ | / _ | '_ / _` | | |  _| / _` | ' \| ' \/ -_| '_|
   \___|_\___|_.__\__,_|_| |_| |_\__,_|_||_|_||_\___|_|  
-                                                        
-"""        
+                                                        """        
         
         
         
@@ -166,38 +158,21 @@ class GlobalPlanner(Node):
         self.elaborateTrackline()
         self.destroy_subscription(self.centerline_sub)
 
-    def __boundaries_sub_callback(self, msg: Marker):
-        line = None
-
-        if msg.color.r == 0 and msg.color.g == 0 and msg.color.b == 1:
-            line = self.track.lines.BLUE
-        elif msg.color.r == 1 and msg.color.g == 1 and msg.color.b == 0:
-            line = self.track.lines.YELLOW
-        else:
-            self.get_logger().warning(f'Read unknown boundaries ({str(msg.color)}).')
-            return
-        
-        self.track.add_boundary(points=[[point.x, point.y, point.z, point.z] for point in msg.points], line=line)
-        
-        if(self.params_dict['misc']['debug']):
-            self.get_logger().info(f'Saved boundaries [{line}] ({len(msg.points)} points).')
-
-        if self.track.has_boundaries():
-            self.destroy_subscription(self.boundaries_sub)
-
     def __race_status_sub_callback(self, msg: RaceStatus):
         # currentLap represent the number of laps completed. 
         if msg.current_lap != self.__current_lap:
             self.__current_lap = msg.current_lap
-            self.get_logger().info(f'Lap {self.__current_lap} completed.')
-            if self.__current_lap >2:
-                self.destroy_subscription(self.race_status_sub)
+            if self.__current_lap == 1:
+                self.get_logger().info(f'Lap 1 started.')
+            else:
+                self.get_logger().info(f'Lap {int(self.__current_lap)-1} completed.')
+           
     
     
     
     def elaborateTrackline(self):
    
-        self.get_logger().info('ELABORATING TRACKLINE')
+        self.get_logger().info('Elaborating Trackline')
         str = self.trajectory.optimize(self.track.get_reftrack())
         
         if self.params_dict['misc']['savePointsPath']:
