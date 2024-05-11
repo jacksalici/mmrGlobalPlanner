@@ -179,7 +179,7 @@ class GlobalPlanner(Node):
         
         self.track.add_boundary(points=[[point.x, point.y, point.z, point.z] for point in msg.points], line=line)
         
-        if(self.pars['misc']['debug']):
+        if(self.params_dict['misc']['debug']):
             self.get_logger().info(f'Saved boundaries [{line}] ({len(msg.points)} points).')
 
         if self.track.has_boundaries():
