@@ -4,7 +4,6 @@ import json
 import os
 import trajectory_planning_helpers as tph
 import copy
-import matplotlib.pyplot as plt
 import configparser
 import pkg_resources
 import sys
@@ -47,6 +46,9 @@ class Trajectory:
         
     def optimize(self, rtrack = np.array([])):
         # IMPORT TRACK AND VEHICLE DYNAMICS INFORMATION 
+        if self.pars['misc']['debug']:        
+            import matplotlib.pyplot as plt
+
 
         # save start time
         t_start = time.perf_counter()
@@ -129,7 +131,7 @@ class Trajectory:
                                                         el_lengths=el_lengths_opt_interp)
         print("INFO: Estimated laptime: %.2fs" % t_profile_cl[-1])
 
-        if self.pars['plot_opts']["racetraj_vel"]:
+        if self.pars['misc']['debug'] and self.pars['plot_opts']["racetraj_vel"]:
             s_points = np.cumsum(el_lengths_opt_interp[:-1])
             s_points = np.insert(s_points, 0, 0.0)
 
@@ -272,7 +274,8 @@ class Trajectory:
             bound2_imp = reftrack_imp[::n_skip, :2] - normvec_imp * np.expand_dims(reftrack_imp[::n_skip, 3], 1)
 
         # plot results
-        result_plots.result_plots(plot_opts=self.pars['plot_opts'],
+        if self.pars['misc']['debug']:
+            result_plots.result_plots(plot_opts=self.pars['plot_opts'],
                                                         width_veh_opt=self.pars["optim_opts"]["width_opt"],
                                                         width_veh_real=self.pars["veh_params"]["width"],
                                                         refline=reftrack_interp[:, :2],
@@ -297,7 +300,10 @@ class Trajectory:
         
 #for debug
 if __name__ == "__main__":
-    import argparse, pathlib, time, yaml
+    import argparse, pathlib, time, yaml, scipy
+    
+    print("-------------\nGlobal Planner\n-------------")
+    print(f"Numpy Version: {np.__version__}\nScipy Version: {scipy.__version__}\n-------------")
     
     parser = argparse.ArgumentParser(description='Global Planner tester tool')
     
@@ -315,7 +321,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     files_path = []
     
-    yaml_file_path = "../config/params.yaml"
+    yaml_file_path = "config/params.yaml"
 
     # Load parameters from the YAML file
     params = yaml.safe_load(open(yaml_file_path, 'r'))

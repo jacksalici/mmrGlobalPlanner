@@ -42,7 +42,7 @@
       savePointsPath: false # to save boundaries
       fakeDistance: 1.5  # distance to apply when using legacy topic
       legacylocalTopic: true # legacy topic
-      debug: true #print some more debugging info
+      debug: false #print some more debugging info
 
 
     #NON TOCCARE LE SEGUENTI CONFIG SE NON SAI COSA STAI FACENDO
@@ -71,4 +71,4 @@
       racetraj_vel_3d_stepsize: 1.0   # [m] vertical lines stepsize in 3D velocity profile plot
       spline_normals: false           # plot spline normals to check for crossings
       mintime_plots: false            # plot states, controls, friction coeffs etc. (mintime only)
-      racetraj_vel_3d_simple: false    # plot 3D velocity profile above raceline (simple)
+      racetraj_vel_3d_simple: true    # plot 3D velocity profile above raceline (simple)

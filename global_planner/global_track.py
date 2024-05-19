@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from enum import Enum
 
 
@@ -26,6 +25,7 @@ class Track():
 # just for testing
 
 def main():
+    import matplotlib.pyplot as plt
 
     num_points = 10
     theta = np.linspace(0, 2*np.pi, num_points, endpoint=False)
