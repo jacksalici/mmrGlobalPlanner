@@ -7,7 +7,7 @@ import copy
 import configparser
 import pkg_resources
 import sys
-from global_planner.helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, result_plots, interp_track
+from global_planner.helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, interp_track
 
 
 
@@ -47,6 +47,7 @@ class Trajectory:
     def optimize(self, rtrack = np.array([])):
         # IMPORT TRACK AND VEHICLE DYNAMICS INFORMATION 
         if self.pars['misc']['debug']:        
+            from global_planner.helper import result_plots
             import matplotlib.pyplot as plt
 
 
