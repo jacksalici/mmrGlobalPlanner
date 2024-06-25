@@ -154,7 +154,8 @@ class GlobalPlanner(Node):
             point.z if point.z != 0 else self.params_dict['misc']['fakeDistance']]
             for point in msg.points])
         self.get_logger().info(f'Saved waypoints ({len(msg.points)})')
-
+        if self.params_dict['misc']['debug']:
+            self.track.save_reftrack()
         self.elaborateTrackline()
         self.destroy_subscription(self.centerline_sub)
 

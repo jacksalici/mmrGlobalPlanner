@@ -4,7 +4,7 @@ declare -a commands=(
     "ros2 launch waypoint_generator waypoint_generator.launch.py"
     "ros2 launch lap_counter lap_counter.launch.py"
     "ros2 launch global_planner global_planner.launch.py"
-    "ros2 bag play ~/Downloads/BAG/test_06_07/test_engine_20hz_0 -r 4"
+    "ros2 bag play /home/jack/Downloads/BAG24/05_11_test/v1 -r 6"
     "ros2 topic echo /planning/speedProfilePoints"
 )
 for i in "${commands[@]}"
