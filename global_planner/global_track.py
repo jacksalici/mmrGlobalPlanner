@@ -20,11 +20,14 @@ class Track():
 
     def is_reftrack_created(self):
         return self.__reftrack != None
+<<<<<<< Updated upstream
+=======
     
     def save_reftrack(self, opt_path="centerl_local.json"):
         import json
         with open(opt_path, 'w') as f:
             json.dump(self.__reftrack.tolist(), f)
+>>>>>>> Stashed changes
 
 
 # just for testing

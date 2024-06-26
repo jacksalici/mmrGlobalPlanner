@@ -14,7 +14,7 @@
       # spline regression smooth options
       reg_smooth_opts:
         k_reg: 3   # [-] order of B-Splines -> standard: 3
-        s_reg: 1   # [-] smoothing factor, range [1.0, 100.0]
+        s_reg: 1  # [-] smoothing factor, range [1.0, 100.0]
 
       # general vehicle parameters required in several functions
       veh_params:
@@ -41,8 +41,8 @@
     misc:
       savePointsPath: false # to save boundaries
       fakeDistance: 1.5  # distance to apply when using legacy topic
-      legacylocalTopic: true # legacy topic
-      debug: true #print some more debugging info
+      legacylocalTopic: false # legacy topic
+      debug: false #print some more debugging info
 
 
     #NON TOCCARE LE SEGUENTI CONFIG SE NON SAI COSA STAI FACENDO
