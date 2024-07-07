@@ -7,17 +7,12 @@ import copy
 import configparser
 import pkg_resources
 import sys
-<<<<<<< Updated upstream
-from global_planner.helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, interp_track
-
-=======
 
 try:
     from .helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, interp_track
 except:
     from global_planner.helper import prep_track, check_traj, export_traj_race, export_traj_ltpl, interp_track
     
->>>>>>> Stashed changes
 
 
 class Trajectory:

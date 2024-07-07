@@ -42,7 +42,7 @@
       savePointsPath: false # to save boundaries
       fakeDistance: 1.5  # distance to apply when using legacy topic
       legacylocalTopic: false # legacy topic
-      debug: false #print some more debugging info
+      debug: true #print some more debugging info
 
 
     #NON TOCCARE LE SEGUENTI CONFIG SE NON SAI COSA STAI FACENDO
