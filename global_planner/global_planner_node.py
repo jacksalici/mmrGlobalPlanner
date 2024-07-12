@@ -1,5 +1,7 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
+
 
 from visualization_msgs.msg import Marker
 from mmr_base.msg import RaceStatus
@@ -18,7 +20,13 @@ class GlobalPlanner(Node):
         super().__init__('race_status_sub')
         self.params_dict = self.get_params()
         
-
+        qos = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL
+        )    
+        
         self.race_status_sub = self.create_subscription(
             RaceStatus,
             '/planning/race_status',
@@ -29,7 +37,7 @@ class GlobalPlanner(Node):
             Marker,
             '/planning/center_line_completed' if not self.params_dict['misc']['legacylocalTopic'] else '/planning/waypoints_all',
             self.__centerline_sub_callback,
-            10)
+            qos)
 
     
         self.speed_profile_pub = self.create_publisher(SpeedProfilePoints, '/planning/speedProfilePoints', 10)
